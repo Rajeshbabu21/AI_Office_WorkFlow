@@ -35,7 +35,8 @@ ENV/
 env/
 .env
 .env.*
-Backend/.env
+backend/.env
+frontend/.env
 
 # =========================
 # Build / distribution
