@@ -9,6 +9,9 @@ from database.db import supabase
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
+from ticket.ticketschema import InsertTicket
+from ticket.ticket import create_ticket
+from ticket.ticketaiservice import classify_ticket
 
 
 app = FastAPI()
@@ -71,3 +74,14 @@ def login_users(form_data: OAuth2PasswordRequestForm = Depends()):
     except Exception as e:
         print("LOGIN ERROR:", e)
         raise HTTPException(status_code=500, detail="Login failed")
+
+
+@app.post("/insert_ticket")
+def app_insert_ticket(
+    ticket: InsertTicket,
+    user: dict = Depends(current_user)
+):
+    return create_ticket(
+        ticket=ticket,
+        user_id=user["id"]
+    )

@@ -53,7 +53,7 @@ def verfiy_token(token:str)->TokenData:
 
 def current_user(token:str=Depends(oauth2_scheme)):
     token_data = verfiy_token(token)
-    response = supabase.table("profiles").select("*").eq("email",token_data.email).execute()
+    response = supabase.table("users").select("*").eq("email",token_data.email).execute()
     user = response.data
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
