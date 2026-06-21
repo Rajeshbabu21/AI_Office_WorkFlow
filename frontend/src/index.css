@@ -5,14 +5,14 @@
 :root {
   --font-sans: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  background-color: #020403;
+  background-color: #020308;
   color: #d1d5db;
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background-color: #020403;
+  background-color: #020308;
   color: #e5e7eb;
   overflow-x: hidden;
 }
@@ -28,49 +28,44 @@ body {
   flex-direction: column;
 }
 
-/* Custom Grid Background Pattern */
+/* Custom Grid Background Pattern - Deep Navy/Blue grids */
 .bg-grid-pattern {
   background-size: 50px 50px;
   background-image: 
-    linear-gradient(to right, rgba(34, 197, 94, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(34, 197, 94, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
 }
 
-/* Faint Matrix/Digital Rain Effect elements */
-.matrix-fade {
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%);
+/* Glow effects - Cyber Blue/Cyan */
+.text-glow-blue {
+  text-shadow: 0 0 12px rgba(59, 130, 246, 0.4), 0 0 24px rgba(6, 182, 212, 0.2);
 }
 
-/* Glow effects */
-.text-glow-green {
-  text-shadow: 0 0 12px rgba(34, 197, 94, 0.4), 0 0 24px rgba(34, 197, 94, 0.2);
+.text-glow-blue-strong {
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.65), 0 0 40px rgba(6, 182, 212, 0.35);
 }
 
-.text-glow-green-strong {
-  text-shadow: 0 0 20px rgba(34, 197, 94, 0.75), 0 0 40px rgba(34, 197, 94, 0.35);
+.glow-box-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
 }
 
-.glow-box-green {
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+.glow-box-blue-hover:hover {
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
 }
 
-.glow-box-green-hover:hover {
-  box-shadow: 0 0 25px rgba(34, 197, 94, 0.2);
-}
-
-/* Smooth custom scrollbar matching the green theme */
+/* Smooth custom scrollbar matching the navy theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #020403;
+  background: #020308;
 }
 ::-webkit-scrollbar-thumb {
-  background: #15291b;
+  background: #0d172e;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #22c55e;
+  background: #3b82f6;
 }
 
 /* Scanline animation */
@@ -96,7 +91,7 @@ body {
   left: 0;
   bottom: 0;
   right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(34, 197, 94, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(59, 130, 246, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
   z-index: 2;
   background-size: 100% 4px, 6px 100%;
   pointer-events: none;
