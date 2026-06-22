@@ -10,13 +10,32 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
 from ticket.ticketschema import InsertTicket
-from ticket.ticket import create_ticket
+from ticket.ticket import create_ticket, escalate_ticket_by_id
 from ticket.ticketaiservice import classify_ticket
 from rag.sop_service import process_sop_pdf
 from rag.SOPschema import SOPCreate
 
 
+
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+
+    allow_origins=[
+    "http://localhost:5173", 
+    "http://127.0.0.1:5173",
+    "https://resmax.vercel.app",
+    "https://resmax.onrender.com"
+    ],
+    
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 
 @app.get("/ping")
 def read_root():
@@ -152,3 +171,51 @@ async def upload_sop(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {str(e)}"
         )
+
+
+
+
+
+@app.get("/ticket/{ticket_id}/assignee")
+def get_ticket_assignee(ticket_id: int):
+    # 1. Fetch ticket to check assigned_to
+    ticket_res = supabase.table("tickets").select("*").eq("id", ticket_id).execute()
+    if not ticket_res.data:
+        raise HTTPException(status_code=404, detail=f"Ticket with ID {ticket_id} not found")
+    
+    ticket_data = ticket_res.data[0]
+    assigned_to = ticket_data.get("assigned_to")
+    
+    if not assigned_to:
+        return {
+            "ticket_id": ticket_id,
+            "assigned_to": None,
+            "agent_name": None,
+            "agent_email": None,
+            "department": None
+        }
+        
+    # 2. Fetch agent details from users table
+    user_res = supabase.table("users").select("*").eq("id", assigned_to).execute()
+    if not user_res.data:
+        return {
+            "ticket_id": ticket_id,
+            "assigned_to": assigned_to,
+            "agent_name": "Unknown",
+            "agent_email": None,
+            "department": None
+        }
+        
+    agent = user_res.data[0]
+    return {
+        "ticket_id": ticket_id,
+        "assigned_to": assigned_to,
+        "agent_name": agent.get("full_name"),
+        "agent_email": agent.get("email"),
+        "department": agent.get("department")
+    }
+
+
+@app.post("/ticket/{ticket_id}/escalate")
+def escalate_ticket(ticket_id: int, reason: str = "User marked as not resolved"):
+    return escalate_ticket_by_id(ticket_id, reason)

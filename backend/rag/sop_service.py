@@ -12,16 +12,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def parse_supabase_path(file_url: str):
-    """
-    Parses a Supabase storage path or URL into a tuple of (bucket_name, file_path).
-    Supports:
-    - Relative paths: 'bucket_name/path/to/file.pdf'
-    - Full URLs: 'https://xxx.supabase.co/storage/v1/object/public/bucket_name/path/to/file.pdf'
-    """
     if not file_url:
         return None, None
         
-    # Standardize path separators
     file_url = file_url.replace("\\", "/")
     
     # Check if it is a full URL

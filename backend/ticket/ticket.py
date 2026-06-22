@@ -1,5 +1,6 @@
 import os
 import logging
+from typing import Optional
 import google.generativeai as genai
 from fastapi import FastAPI, Depends, HTTPException, status
 from ticket.ticketschema import InsertTicket
@@ -9,6 +10,235 @@ from ticket.ticketaiservice import classify_ticket, generate_ticket_response
 # Setup basic logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def assign_ticket_to_agent(ticket_id: int, department: str) -> Optional[int]:
+    """
+    Finds a user in the classified department with the role ('admin', 'support', 'agent').
+    Case 1: No agent found -> leave assigned_to as NULL, insert ticket_history "No department agent found".
+    Case 2: One agent found -> update tickets (assigned_to, status = 'ASSIGNED'), insert ticket_history "Ticket Assigned To Department Agent".
+    Case 3: Multiple agents found -> assign to user with fewest active tickets (status NOT IN ('RESOLVED', 'CLOSED')), update tickets (assigned_to, status = 'ASSIGNED'), insert ticket_history "Ticket Assigned To Least Loaded Agent".
+    """
+    logger.info("===== DEPARTMENT ASSIGNMENT START =====")
+    logger.info(f"Ticket ID: {ticket_id}")
+    logger.info(f"Department detected: {department}")
+    
+    try:
+        logger.info("Querying department agents")
+        # 1. Fetch eligible agents
+        users_res = (
+            supabase
+            .table("users")
+            .select("*")
+            .eq("department", department)
+            .in_("role", ["admin", "support", "agent"])
+            .execute()
+        )
+        matching_users = users_res.data or []
+        matching_emails = [u["email"] for u in matching_users]
+        logger.info(f"Matching agents found: {matching_emails}")
+        
+        # CASE 1: No agent found
+        if not matching_users:
+            logger.info(f"Department identified: {department}")
+            logger.info("No matching agents found")
+            logger.info("Assignment skipped")
+            
+            # Create ticket_history entry
+            supabase.table("ticket_history").insert({
+                "ticket_id": ticket_id,
+                "action": "No department agent found",
+                "performed_by": None
+            }).execute()
+            
+            logger.info("===== DEPARTMENT ASSIGNMENT END =====")
+            return None
+            
+        selected_user = None
+        
+        # CASE 2: One agent found
+        if len(matching_users) == 1:
+            selected_user = matching_users[0]
+            logger.info(f"Department identified: {department}")
+            logger.info(f"Matching users found: {matching_emails}")
+            logger.info(f"Assigned user ID: {selected_user['id']}")
+            logger.info(f"Assigned user Name: {selected_user['full_name']}")
+            logger.info(f"Assigned user Email: {selected_user['email']}")
+            logger.info(f"Selected agent: {selected_user['email']}")
+            
+            logger.info("Updating assigned_to field")
+            # Update tickets table
+            supabase.table("tickets").update({
+                "assigned_to": selected_user["id"],
+                "status": "ASSIGNED"
+            }).eq("id", ticket_id).execute()
+            
+            # Create ticket_history record
+            supabase.table("ticket_history").insert({
+                "ticket_id": ticket_id,
+                "action": "Ticket Assigned To Department Agent",
+                "performed_by": None
+            }).execute()
+            
+            logger.info("Assignment successful")
+            logger.info("===== DEPARTMENT ASSIGNMENT END =====")
+            return selected_user["id"]
+            
+        # CASE 3: Multiple agents found
+        logger.info(f"Department identified: {department}")
+        logger.info("Multiple agents found")
+        logger.info("Calculating ticket load")
+        
+        user_ids = [u["id"] for u in matching_users]
+        
+        # Query active tickets (status NOT IN ('RESOLVED', 'resolved', 'CLOSED', 'closed'))
+        tickets_res = (
+            supabase
+            .table("tickets")
+            .select("id, assigned_to")
+            .in_("assigned_to", user_ids)
+            .neq("status", "RESOLVED")
+            .neq("status", "resolved")
+            .neq("status", "CLOSED")
+            .neq("status", "closed")
+            .execute()
+        )
+        active_tickets = tickets_res.data or []
+        
+        # Count active tickets per agent
+        ticket_counts = {uid: 0 for uid in user_ids}
+        for ticket in active_tickets:
+            uid = ticket.get("assigned_to")
+            if uid in ticket_counts:
+                ticket_counts[uid] += 1
+                
+        logger.info(f"Agent active ticket counts: {ticket_counts}")
+        logger.info(f"Active ticket counts: {ticket_counts}")
+        
+        # Select agent with minimum active tickets
+        selected_user = min(matching_users, key=lambda u: ticket_counts[u["id"]])
+        logger.info(f"Selected least loaded agent: {selected_user['email']}")
+        logger.info(f"Selected agent: {selected_user['email']}")
+        
+        logger.info("Updating assigned_to field")
+        # Update tickets table
+        supabase.table("tickets").update({
+            "assigned_to": selected_user["id"],
+            "status": "ASSIGNED"
+        }).eq("id", ticket_id).execute()
+        
+        # Create ticket_history record
+        supabase.table("ticket_history").insert({
+            "ticket_id": ticket_id,
+            "action": "Ticket Assigned To Least Loaded Agent",
+            "performed_by": None
+        }).execute()
+        
+        logger.info("Assignment successful")
+        logger.info("===== DEPARTMENT ASSIGNMENT END =====")
+        return selected_user["id"]
+        
+    except Exception as e:
+        logger.error(f"Error in automatic ticket assignment: {e}")
+        try:
+            supabase.table("ticket_history").insert({
+                "ticket_id": ticket_id,
+                "action": "No department agent found",
+                "performed_by": None
+            }).execute()
+        except Exception:
+            pass
+        logger.info("===== DEPARTMENT ASSIGNMENT END =====")
+        return None
+
+def escalate_ticket_by_id(ticket_id: int, reason: str = "User marked as not resolved"):
+    """
+    Escalates a ticket by creating a Jira issue, recording details in jira_tickets and escalations tables,
+    and updating the ticket status to 'ESCALATED'.
+    """
+    try:
+        logger.info(f"Starting ticket escalation for ticket ID: {ticket_id}")
+        
+        # 1. Fetch ticket details
+        ticket_res = supabase.table("tickets").select("*").eq("id", ticket_id).execute()
+        if not ticket_res.data:
+            raise HTTPException(status_code=404, detail=f"Ticket with ID {ticket_id} not found")
+        ticket_data = ticket_res.data[0]
+        
+        # 2. Fetch assigned agent details if exists
+        assigned_to = ticket_data.get("assigned_to")
+        agent_name = "Unassigned"
+        agent_email = "N/A"
+        agent_dept = "N/A"
+        
+        if assigned_to:
+            user_res = supabase.table("users").select("*").eq("id", assigned_to).execute()
+            if user_res.data:
+                agent = user_res.data[0]
+                agent_name = agent.get("full_name") or "N/A"
+                agent_email = agent.get("email") or "N/A"
+                agent_dept = agent.get("department") or "N/A"
+                
+        # 3. Build Jira description including agent info
+        jira_desc = (
+            f"{ticket_data.get('description', '')}\n\n"
+            f"Assigned Agent:\n{agent_name}\n\n"
+            f"Agent Email:\n{agent_email}\n\n"
+            f"Department:\n{agent_dept}"
+        )
+        
+        # 4. Create Jira Issue using existing service
+        from jira.jira_service import create_jira_ticket
+        logger.info(f"Creating Jira ticket with description: {jira_desc}")
+        jira_res = create_jira_ticket(
+            title=ticket_data.get("title") or f"Escalated Ticket #{ticket_id}",
+            description=jira_desc
+        )
+        
+        jira_issue_key = jira_res.get("key")
+        jira_issue_id = jira_res.get("id")
+        jira_status = "To Do"
+        
+        logger.info(f"Jira issue created: key={jira_issue_key}, id={jira_issue_id}")
+        
+        # 5. Insert row into escalations table
+        supabase.table("escalations").insert({
+            "ticket_id": ticket_id,
+            "escalated_to": "Jira",
+            "reason": reason
+        }).execute()
+        
+        # 6. Insert row into jira_tickets table
+        supabase.table("jira_tickets").insert({
+            "ticket_id": ticket_id,
+            "jira_issue_key": jira_issue_key,
+            "jira_issue_id": jira_issue_id,
+            "jira_status": jira_status
+        }).execute()
+        
+        # 7. Update tickets.status = 'ESCALATED'
+        supabase.table("tickets").update({"status": "ESCALATED"}).eq("id", ticket_id).execute()
+        
+        # Create ticket history log
+        supabase.table("ticket_history").insert({
+            "ticket_id": ticket_id,
+            "action": "Ticket Escalated to Jira",
+            "performed_by": None
+        }).execute()
+        
+        return {
+            "status": "success",
+            "message": "Ticket escalated successfully",
+            "jira_issue_key": jira_issue_key,
+            "jira_issue_id": jira_issue_id,
+            "jira_status": jira_status
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to escalate ticket {ticket_id}: {e}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Failed to escalate ticket: {str(e)}")
+
 
 def validate_ticket_columns() -> bool:
     """
@@ -75,6 +305,9 @@ def create_ticket(ticket: InsertTicket, user_id: int):
         data = ticket.dict(exclude_none=True)
         data["user_id"] = user_id
 
+        if "status" not in data:
+            data["status"] = "Open"
+
         # Sanitize assigned_to: if 0, treat as unassigned (NULL)
         if data.get("assigned_to") == 0:
             data.pop("assigned_to", None)
@@ -136,6 +369,7 @@ def create_ticket(ticket: InsertTicket, user_id: int):
     sentiment = "Neutral"
     confidence = 0.8
     ai_response = "AI assistance is currently unavailable. Please wait for manual support."
+    assigned_user_id = None
 
     # Initialize debugging lists
     retrieved_sops = []
@@ -282,10 +516,7 @@ def create_ticket(ticket: InsertTicket, user_id: int):
             # STEP 4: Building RAG Context
             logger.info("STEP 4: Building RAG Context")
             
-            # Format context with metadata according to prompt requirements:
-            # SOP Document: ...
-            # Department: ...
-            # Relevant Content: ...
+            
             context_blocks = []
             for doc in retrieved_chunks:
                 block = f"SOP Document:\n{doc.get('sop_title')}\n\nDepartment:\n{doc.get('sop_department')}\n\nRelevant Content: {doc.get('chunk_text')}"
@@ -349,6 +580,60 @@ def create_ticket(ticket: InsertTicket, user_id: int):
             logger.error(f"Failed to update tickets.ai_response for ticket ID {ticket_id}: {upd_ai_err}")
             raise upd_ai_err
 
+        # Verify retrieved chunks exist in the database and are not empty
+        has_valid_chunks = False
+        if retrieved_chunks:
+            try:
+                chunk_ids = [c.get("id") for c in retrieved_chunks if c.get("id")]
+                if chunk_ids:
+                    logger.info(f"Verifying {len(chunk_ids)} chunk IDs in sop_chunks table...")
+                    db_chunks_res = supabase.table("sop_chunks").select("id, chunk_text").in_("id", chunk_ids).execute()
+                    db_chunks = db_chunks_res.data or []
+                    valid_chunks = [ch for ch in db_chunks if ch.get("chunk_text") and ch.get("chunk_text").strip()]
+                    if valid_chunks:
+                        has_valid_chunks = True
+                        logger.info(f"Verified: {len(valid_chunks)} chunks exist and are not empty in sop_chunks.")
+                else:
+                    # Fallback to verify by text match
+                    chunk_texts = [c.get("chunk_text") for c in retrieved_chunks if c.get("chunk_text")]
+                    if chunk_texts:
+                        logger.info("Verifying chunks in sop_chunks table by text match...")
+                        db_chunks_res = supabase.table("sop_chunks").select("id, chunk_text").in_("chunk_text", chunk_texts).execute()
+                        db_chunks = db_chunks_res.data or []
+                        valid_chunks = [ch for ch in db_chunks if ch.get("chunk_text") and ch.get("chunk_text").strip()]
+                        if valid_chunks:
+                            has_valid_chunks = True
+                            logger.info(f"Verified: {len(valid_chunks)} chunks exist and are not empty in sop_chunks by text match.")
+            except Exception as verify_err:
+                logger.error(f"Error verifying chunks in sop_chunks table: {verify_err}")
+                has_valid_chunks = False
+
+        # Decide whether to assign the ticket or set it to RESOLVED
+        is_resolved_by_ai = False
+        if ai_response and ai_response != "AI assistance is currently unavailable. Please wait for manual support.":
+            if "The required information was not found in the available SOP documents." not in ai_response:
+                if has_valid_chunks:
+                    is_resolved_by_ai = True
+
+        if is_resolved_by_ai:
+            logger.info("AI resolution successful with verified SOP chunks. Setting ticket status to RESOLVED and skipping assignment.")
+            status_update_res = supabase.table("tickets").update({"status": "RESOLVED"}).eq("id", ticket_id).execute()
+            if status_update_res.data:
+                final_ticket = status_update_res.data[0]
+            else:
+                final_ticket["status"] = "RESOLVED"
+            assigned_user_id = None
+        else:
+            logger.info("AI resolution failed or no valid SOP chunks found. Triggering automatic ticket assignment.")
+            assigned_user_id = assign_ticket_to_agent(ticket_id, department)
+            ticket_after_res = supabase.table("tickets").select("*").eq("id", ticket_id).execute()
+            if ticket_after_res.data:
+                final_ticket = ticket_after_res.data[0]
+            else:
+                final_ticket["assigned_to"] = assigned_user_id
+                if assigned_user_id:
+                    final_ticket["status"] = "ASSIGNED"
+
         # 3i. Insert record into ticket_history (action = "AI Response Generated", performed_by = None)
         try:
             logger.info(f"Inserting ticket_history 'AI Response Generated' for ticket ID {ticket_id}")
@@ -375,6 +660,9 @@ def create_ticket(ticket: InsertTicket, user_id: int):
             }).execute()
         except Exception as msg_err:
             logger.error(f"Fallback insert ticket_messages failed for ticket ID {ticket_id}: {msg_err}")
+
+        # Auto assign ticket since AI failed
+        assigned_user_id = assign_ticket_to_agent(ticket_id, department)
 
         # 4b. Update tickets table with fallback classification and default ai_response
         if columns_exist:
@@ -437,6 +725,8 @@ def create_ticket(ticket: InsertTicket, user_id: int):
         final_ticket["department"] = department
     if "ai_response" not in final_ticket:
         final_ticket["ai_response"] = ai_response
+    if "assigned_to" not in final_ticket or final_ticket["assigned_to"] is None:
+        final_ticket["assigned_to"] = assigned_user_id
 
     # 5. Formulate and return API response
     return {

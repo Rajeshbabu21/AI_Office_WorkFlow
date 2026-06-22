@@ -15,7 +15,7 @@ pypdf==5.5.0
 sentence-transformers==4.1.0
 faiss-cpu==1.11.0
 numpy==2.2.5
-
+requests==2.32.3
 
 
 
