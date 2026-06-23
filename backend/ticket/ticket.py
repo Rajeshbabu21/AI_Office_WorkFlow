@@ -11,12 +11,12 @@ from ticket.ticketaiservice import classify_ticket, generate_ticket_response
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def assign_ticket_to_agent(ticket_id: int, department: str) -> Optional[int]:
+def assign_ticket_to_agent(ticket_id: int, department: str, reason: str = "AI failed to resolve the ticket") -> Optional[int]:
     """
     Finds a user in the classified department with the role ('admin', 'support', 'agent').
     Case 1: No agent found -> leave assigned_to as NULL, insert ticket_history "No department agent found".
-    Case 2: One agent found -> update tickets (assigned_to, status = 'ASSIGNED'), insert ticket_history "Ticket Assigned To Department Agent".
-    Case 3: Multiple agents found -> assign to user with fewest active tickets (status NOT IN ('RESOLVED', 'CLOSED')), update tickets (assigned_to, status = 'ASSIGNED'), insert ticket_history "Ticket Assigned To Least Loaded Agent".
+    Case 2: One agent found -> update tickets (assigned_to, status = 'ASSIGNED'), insert ticket_history "Ticket Assigned To Department Agent", insert escalation record.
+    Case 3: Multiple agents found -> assign to user with fewest active tickets (status NOT IN ('RESOLVED', 'CLOSED')), update tickets (assigned_to, status = 'ASSIGNED'), insert ticket_history "Ticket Assigned To Least Loaded Agent", insert escalation record.
     """
     logger.info("===== DEPARTMENT ASSIGNMENT START =====")
     logger.info(f"Ticket ID: {ticket_id}")
@@ -78,6 +78,13 @@ def assign_ticket_to_agent(ticket_id: int, department: str) -> Optional[int]:
                 "action": "Ticket Assigned To Department Agent",
                 "performed_by": None
             }).execute()
+
+            # Insert row into escalations table
+            supabase.table("escalations").insert({
+                "ticket_id": ticket_id,
+                "escalated_to": selected_user["full_name"],
+                "reason": reason
+            }).execute()
             
             logger.info("Assignment successful")
             logger.info("===== DEPARTMENT ASSIGNMENT END =====")
@@ -131,6 +138,13 @@ def assign_ticket_to_agent(ticket_id: int, department: str) -> Optional[int]:
             "ticket_id": ticket_id,
             "action": "Ticket Assigned To Least Loaded Agent",
             "performed_by": None
+        }).execute()
+
+        # Insert row into escalations table
+        supabase.table("escalations").insert({
+            "ticket_id": ticket_id,
+            "escalated_to": selected_user["full_name"],
+            "reason": reason
         }).execute()
         
         logger.info("Assignment successful")
@@ -625,7 +639,15 @@ def create_ticket(ticket: InsertTicket, user_id: int):
             assigned_user_id = None
         else:
             logger.info("AI resolution failed or no valid SOP chunks found. Triggering automatic ticket assignment.")
-            assigned_user_id = assign_ticket_to_agent(ticket_id, department)
+            if not ai_response or ai_response == "AI assistance is currently unavailable. Please wait for manual support.":
+                fail_reason = "AI assistance is currently unavailable"
+            elif "The required information was not found in the available SOP documents." in ai_response:
+                fail_reason = "The required information was not found in the available SOP documents."
+            elif not has_valid_chunks:
+                fail_reason = "No matching SOP chunks found in database"
+            else:
+                fail_reason = "AI failed to resolve the ticket"
+            assigned_user_id = assign_ticket_to_agent(ticket_id, department, reason=fail_reason)
             ticket_after_res = supabase.table("tickets").select("*").eq("id", ticket_id).execute()
             if ticket_after_res.data:
                 final_ticket = ticket_after_res.data[0]
@@ -662,7 +684,8 @@ def create_ticket(ticket: InsertTicket, user_id: int):
             logger.error(f"Fallback insert ticket_messages failed for ticket ID {ticket_id}: {msg_err}")
 
         # Auto assign ticket since AI failed
-        assigned_user_id = assign_ticket_to_agent(ticket_id, department)
+        fail_reason = f"AI workflow failed: {str(ai_workflow_err)}"
+        assigned_user_id = assign_ticket_to_agent(ticket_id, department, reason=fail_reason)
 
         # 4b. Update tickets table with fallback classification and default ai_response
         if columns_exist:

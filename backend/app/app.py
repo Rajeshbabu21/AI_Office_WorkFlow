@@ -222,3 +222,83 @@ def get_ticket_assignee(ticket_id: int):
 @app.post("/ticket/{ticket_id}/escalate")
 def escalate_ticket(ticket_id: int, reason: str = "User marked as not resolved"):
     return escalate_ticket_by_id(ticket_id, reason)
+
+@app.get("/tickets")
+def get_tickets(user: dict = Depends(current_user)):
+    try:
+        if user["role"] in ["admin", "support", "agent", "Support", "Admin", "Agent"]:
+            response = (
+                supabase
+                .table("tickets")
+                .select("*")
+                .order("created_at", desc=True)
+                .execute()
+            )
+        else:
+            response = (
+                supabase
+                .table("tickets")
+                .select("*")
+                .eq("user_id", user["id"])
+                .order("created_at", desc=True)
+                .execute()
+            )
+        return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/ticket/{ticket_id}")
+def get_ticket_detail(ticket_id: int, user: dict = Depends(current_user)):
+    try:
+        ticket_res = supabase.table("tickets").select("*").eq("id", ticket_id).execute()
+        if not ticket_res.data:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        ticket = ticket_res.data[0]
+        
+        if ticket["user_id"] != user["id"] and user["role"] not in ["admin", "support", "agent", "Support", "Admin", "Agent"]:
+            raise HTTPException(status_code=403, detail="Forbidden")
+            
+        messages_res = supabase.table("ticket_messages").select("*").eq("ticket_id", ticket_id).order("created_at", asc=True).execute()
+        history_res = supabase.table("ticket_history").select("*").eq("ticket_id", ticket_id).order("created_at", desc=True).execute()
+        
+        escalation_res = supabase.table("escalations").select("*").eq("ticket_id", ticket_id).order("escalated_at", desc=True).execute()
+        escalation = escalation_res.data[0] if escalation_res.data else None
+        
+        jira_res = supabase.table("jira_tickets").select("*").eq("ticket_id", ticket_id).execute()
+        jira_ticket = jira_res.data[0] if jira_res.data else None
+        
+        return {
+            "ticket": ticket,
+            "messages": messages_res.data or [],
+            "history": history_res.data or [],
+            "escalation": escalation,
+            "jira_ticket": jira_ticket
+        }
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ticket/{ticket_id}/message")
+def add_ticket_message(ticket_id: int, message: str = Form(...), user: dict = Depends(current_user)):
+    try:
+        ticket_res = supabase.table("tickets").select("*").eq("id", ticket_id).execute()
+        if not ticket_res.data:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        ticket = ticket_res.data[0]
+        
+        if ticket["user_id"] != user["id"] and user["role"] not in ["admin", "support", "agent", "Support", "Admin", "Agent"]:
+            raise HTTPException(status_code=403, detail="Forbidden")
+            
+        msg_res = supabase.table("ticket_messages").insert({
+            "ticket_id": ticket_id,
+            "sender_id": user["id"],
+            "message": message
+        }).execute()
+        
+        return msg_res.data[0]
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=str(e))
+

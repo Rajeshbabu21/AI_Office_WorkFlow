@@ -217,12 +217,20 @@ If issues persist, please contact the local network administrator.`
               Interactive Demo
             </a>
             {token ? (
-              <button
-                onClick={handleLogout}
-                className="text-sm font-semibold border border-red-500/30 hover:border-red-400 bg-red-500/5 hover:bg-red-500/10 text-red-400 px-5 py-2.5 rounded transition-all duration-300 cursor-pointer"
-              >
-                Log Out
-              </button>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/dashboard"
+                  className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-500 hover:to-cyan-400 px-5 py-2.5 rounded transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center justify-center cursor-pointer"
+                >
+                  Console Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-semibold border border-red-500/30 hover:border-red-400 bg-red-500/5 hover:bg-red-500/10 text-red-400 px-5 py-2.5 rounded transition-all duration-300 cursor-pointer"
+                >
+                  Log Out
+                </button>
+              </div>
             ) : (
               <Link
                 to="/login"
@@ -290,12 +298,21 @@ If issues persist, please contact the local network administrator.`
                 Interactive Demo
               </a>
               {token ? (
-                <button
-                  onClick={() => { handleLogout(); setIsMenuOpen(false); }}
-                  className="text-center font-semibold border border-red-500/30 bg-red-500/5 text-red-400 py-2.5 rounded transition-all cursor-pointer"
-                >
-                  Log Out
-                </button>
+                <>
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-center font-semibold bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-2.5 rounded shadow-[0_0_15px_rgba(59,130,246,0.3)] cursor-pointer"
+                  >
+                    Console Dashboard
+                  </Link>
+                  <button
+                    onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                    className="text-center font-semibold border border-red-500/30 bg-red-500/5 text-red-400 py-2.5 rounded transition-all cursor-pointer"
+                  >
+                    Log Out
+                  </button>
+                </>
               ) : (
                 <Link
                   to="/login"
