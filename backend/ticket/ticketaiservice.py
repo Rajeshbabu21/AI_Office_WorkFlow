@@ -100,6 +100,8 @@ STRICT RULES:
 
 "The required information was not found in the available SOP documents."
 
+6. If the retrieved SOP content contains overlapping or duplicated instructions/steps, merge them into a single, cohesive, logical sequence. Do NOT repeat or duplicate steps, headers, or text in your final response.
+
 Title:
 {title}
 

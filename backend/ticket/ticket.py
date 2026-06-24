@@ -11,7 +11,7 @@ from ticket.ticketaiservice import classify_ticket, generate_ticket_response
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def assign_ticket_to_agent(ticket_id: int, department: str, reason: str = "AI failed to resolve the ticket") -> Optional[int]:
+def assign_ticket_to_agent(ticket_id: int, department: str, reason: str = "AI failed to resolve the ticket", performed_by: Optional[int] = None) -> Optional[int]:
     """
     Finds a user in the classified department with the role ('admin', 'support', 'agent').
     Case 1: No agent found -> leave assigned_to as NULL, insert ticket_history "No department agent found".
@@ -47,7 +47,7 @@ def assign_ticket_to_agent(ticket_id: int, department: str, reason: str = "AI fa
             supabase.table("ticket_history").insert({
                 "ticket_id": ticket_id,
                 "action": "No department agent found",
-                "performed_by": None
+                "performed_by": performed_by
             }).execute()
             
             logger.info("===== DEPARTMENT ASSIGNMENT END =====")
@@ -76,7 +76,7 @@ def assign_ticket_to_agent(ticket_id: int, department: str, reason: str = "AI fa
             supabase.table("ticket_history").insert({
                 "ticket_id": ticket_id,
                 "action": "Ticket Assigned To Department Agent",
-                "performed_by": None
+                "performed_by": performed_by
             }).execute()
 
             # Insert row into escalations table
@@ -137,7 +137,7 @@ def assign_ticket_to_agent(ticket_id: int, department: str, reason: str = "AI fa
         supabase.table("ticket_history").insert({
             "ticket_id": ticket_id,
             "action": "Ticket Assigned To Least Loaded Agent",
-            "performed_by": None
+            "performed_by": performed_by
         }).execute()
 
         # Insert row into escalations table
@@ -157,14 +157,14 @@ def assign_ticket_to_agent(ticket_id: int, department: str, reason: str = "AI fa
             supabase.table("ticket_history").insert({
                 "ticket_id": ticket_id,
                 "action": "No department agent found",
-                "performed_by": None
+                "performed_by": performed_by
             }).execute()
         except Exception:
             pass
         logger.info("===== DEPARTMENT ASSIGNMENT END =====")
         return None
 
-def escalate_ticket_by_id(ticket_id: int, reason: str = "User marked as not resolved"):
+def escalate_ticket_by_id(ticket_id: int, reason: str = "User marked as not resolved", performed_by: Optional[int] = None):
     """
     Escalates a ticket by creating a Jira issue, recording details in jira_tickets and escalations tables,
     and updating the ticket status to 'ESCALATED'.
@@ -236,7 +236,7 @@ def escalate_ticket_by_id(ticket_id: int, reason: str = "User marked as not reso
         supabase.table("ticket_history").insert({
             "ticket_id": ticket_id,
             "action": "Ticket Escalated to Jira",
-            "performed_by": None
+            "performed_by": performed_by
         }).execute()
         
         return {
@@ -443,13 +443,13 @@ def create_ticket(ticket: InsertTicket, user_id: int):
         except Exception as upd_err:
             logger.error(f"Failed to update tickets classification columns for ticket ID {ticket_id}: {upd_err}")
 
-        # 3d. Insert record into ticket_history (action = "Ticket Classified", performed_by = None)
+        # 3d. Insert record into ticket_history (action = "Ticket Classified", performed_by = user_id)
         try:
             logger.info(f"Inserting ticket_history 'Ticket Classified' for ticket ID {ticket_id}")
             supabase.table("ticket_history").insert({
                 "ticket_id": ticket_id,
                 "action": "Ticket Classified",
-                "performed_by": None
+                "performed_by": user_id
             }).execute()
             logger.info(f"Successfully inserted history 'Ticket Classified' for ticket ID {ticket_id}")
         except Exception as history_err:
@@ -647,7 +647,12 @@ def create_ticket(ticket: InsertTicket, user_id: int):
                 fail_reason = "No matching SOP chunks found in database"
             else:
                 fail_reason = "AI failed to resolve the ticket"
-            assigned_user_id = assign_ticket_to_agent(ticket_id, department, reason=fail_reason)
+            assigned_user_id = assign_ticket_to_agent(ticket_id, department, reason=fail_reason, performed_by=user_id)
+            try:
+                from ticket.ticket_email_service import send_assignment_email
+                send_assignment_email(ticket_id=ticket_id, creator_id=user_id, assigned_agent_id=assigned_user_id, department=department)
+            except Exception as email_err:
+                logger.error(f"Failed to execute send_assignment_email: {email_err}")
             ticket_after_res = supabase.table("tickets").select("*").eq("id", ticket_id).execute()
             if ticket_after_res.data:
                 final_ticket = ticket_after_res.data[0]
@@ -656,13 +661,13 @@ def create_ticket(ticket: InsertTicket, user_id: int):
                 if assigned_user_id:
                     final_ticket["status"] = "ASSIGNED"
 
-        # 3i. Insert record into ticket_history (action = "AI Response Generated", performed_by = None)
+        # 3i. Insert record into ticket_history (action = "AI Response Generated", performed_by = user_id)
         try:
             logger.info(f"Inserting ticket_history 'AI Response Generated' for ticket ID {ticket_id}")
             supabase.table("ticket_history").insert({
                 "ticket_id": ticket_id,
                 "action": "AI Response Generated",
-                "performed_by": None
+                "performed_by": user_id
             }).execute()
             logger.info(f"Successfully inserted history 'AI Response Generated' for ticket ID {ticket_id}")
         except Exception as history_err:
@@ -685,7 +690,12 @@ def create_ticket(ticket: InsertTicket, user_id: int):
 
         # Auto assign ticket since AI failed
         fail_reason = f"AI workflow failed: {str(ai_workflow_err)}"
-        assigned_user_id = assign_ticket_to_agent(ticket_id, department, reason=fail_reason)
+        assigned_user_id = assign_ticket_to_agent(ticket_id, department, reason=fail_reason, performed_by=user_id)
+        try:
+            from ticket.ticket_email_service import send_assignment_email
+            send_assignment_email(ticket_id=ticket_id, creator_id=user_id, assigned_agent_id=assigned_user_id, department=department)
+        except Exception as email_err:
+            logger.error(f"Failed to execute send_assignment_email in fallback: {email_err}")
 
         # 4b. Update tickets table with fallback classification and default ai_response
         if columns_exist:
@@ -725,13 +735,13 @@ def create_ticket(ticket: InsertTicket, user_id: int):
             final_ticket["department"] = department
             final_ticket["ai_response"] = ai_response
 
-        # 4c. Insert record into ticket_history (action = "AI Response Generated" fallback, performed_by = None)
+        # 4c. Insert record into ticket_history (action = "AI Response Generated" fallback, performed_by = user_id)
         try:
             logger.info(f"Inserting fallback ticket_history 'AI Response Generated' for ticket ID {ticket_id}")
             supabase.table("ticket_history").insert({
                 "ticket_id": ticket_id,
                 "action": "AI Response Generated",
-                "performed_by": None
+                "performed_by": user_id
             }).execute()
         except Exception as history_err:
             logger.error(f"Failed to insert fallback ticket_history 'AI Response Generated' for ticket ID {ticket_id}: {history_err}")

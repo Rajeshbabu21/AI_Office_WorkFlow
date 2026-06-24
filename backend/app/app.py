@@ -307,8 +307,8 @@ def get_ticket_assignee(ticket_id: int):
 
 
 @app.post("/ticket/{ticket_id}/escalate")
-def escalate_ticket(ticket_id: int, reason: str = "User marked as not resolved"):
-    return escalate_ticket_by_id(ticket_id, reason)
+def escalate_ticket(ticket_id: int, reason: str = "User marked as not resolved", user: dict = Depends(current_user)):
+    return escalate_ticket_by_id(ticket_id, reason, performed_by=user["id"])
 
 @app.get("/tickets")
 def get_tickets(user: dict = Depends(current_user)):

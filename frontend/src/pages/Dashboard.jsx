@@ -15,6 +15,7 @@ function Dashboard() {
 
   // Lists & detail states
   const [tickets, setTickets] = useState([]);
+  const [ticketFilter, setTicketFilter] = useState('all');
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetail, setTicketDetail] = useState(null);
   const [assigneeInfo, setAssigneeInfo] = useState(null);
@@ -617,36 +618,88 @@ function Dashboard() {
                       Submit a query to create your first ticket
                     </button>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto scrollbar pr-1">
-                    {tickets.map(t => (
-                      <div
-                        key={t.id}
-                        onClick={() => fetchTicketDetail(t.id)}
-                        className="p-5 border border-blue-500/10 bg-[#030409]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between mb-3 font-mono text-[10px]">
-                            <span className="text-gray-500">TICKET #{t.id}</span>
-                            <span className={`px-2 py-0.5 rounded border ${getStatusBadgeStyle(t.status)}`}>
-                              {getMappedStatusLabel(t.status)}
-                            </span>
-                          </div>
-                          <h3 className="text-white font-bold text-sm mb-2 group-hover:text-cyan-400 transition-colors truncate">
-                            {t.title}
-                          </h3>
-                          <p className="text-gray-400 text-xs line-clamp-2 mb-4 leading-relaxed font-sans">
-                            {t.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono border-t border-blue-500/5 pt-3 mt-auto">
-                          <span>Dept: <strong className="text-gray-400">{t.department || 'General'}</strong></span>
-                          <span>{new Date(t.created_at).toLocaleDateString()}</span>
-                        </div>
+                ) : (() => {
+                  const filteredTickets = tickets.filter(t => {
+                    if (ticketFilter === 'all') return true;
+                    if (ticketFilter === 'assigned') return t.status?.toLowerCase() === 'assigned';
+                    if (ticketFilter === 'resolved') return t.status?.toLowerCase() === 'resolved';
+                    return true;
+                  });
+
+                  return (
+                    <>
+                      {/* Filter Tabs */}
+                      <div className="flex gap-2 border-b border-blue-500/10 pb-3 mt-4">
+                        <button
+                          onClick={() => setTicketFilter('all')}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
+                            ticketFilter === 'all'
+                              ? 'bg-blue-500/15 border border-blue-400 text-cyan-400'
+                              : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
+                          }`}
+                        >
+                          All ({tickets.length})
+                        </button>
+                        <button
+                          onClick={() => setTicketFilter('assigned')}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
+                            ticketFilter === 'assigned'
+                              ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300'
+                              : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
+                          }`}
+                        >
+                          Assigned ({tickets.filter(t => t.status?.toLowerCase() === 'assigned').length})
+                        </button>
+                        <button
+                          onClick={() => setTicketFilter('resolved')}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
+                            ticketFilter === 'resolved'
+                              ? 'bg-green-500/15 border border-green-400 text-green-400'
+                              : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
+                          }`}
+                        >
+                          Resolved ({tickets.filter(t => t.status?.toLowerCase() === 'resolved').length})
+                        </button>
                       </div>
-                    ))}
-                  </div>
-                )}
+
+                      {filteredTickets.length === 0 ? (
+                        <div className="py-16 text-center border border-blue-500/10 rounded-2xl bg-black/40 p-8 mt-4">
+                          <HelpCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                          <p className="text-gray-400 font-mono text-sm">No {ticketFilter === 'all' ? '' : ticketFilter} tickets found.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[380px] overflow-y-auto scrollbar pr-1 mt-4">
+                          {filteredTickets.map(t => (
+                            <div
+                              key={t.id}
+                              onClick={() => fetchTicketDetail(t.id)}
+                              className="p-5 border border-blue-500/10 bg-[#030409]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between mb-3 font-mono text-[10px]">
+                                  <span className="text-gray-500">TICKET #{t.id}</span>
+                                  <span className={`px-2 py-0.5 rounded border ${getStatusBadgeStyle(t.status)}`}>
+                                    {getMappedStatusLabel(t.status)}
+                                  </span>
+                                </div>
+                                <h3 className="text-white font-bold text-sm mb-2 group-hover:text-cyan-400 transition-colors truncate">
+                                  {t.title}
+                                </h3>
+                                <p className="text-gray-400 text-xs line-clamp-2 mb-4 leading-relaxed font-sans">
+                                  {t.description}
+                                </p>
+                              </div>
+                              <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono border-t border-blue-500/5 pt-3 mt-auto">
+                                <span>Dept: <strong className="text-gray-400">{t.department || 'General'}</strong></span>
+                                <span>{new Date(t.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             ) : (
 
@@ -715,14 +768,14 @@ function Dashboard() {
                             <span className="text-white font-semibold">100% SOP Matched</span>
                           </div>
                         </div>
-                        <div className="pt-2">
+                        {/* <div className="pt-2">
                           <button
                             onClick={() => fetchTicketDetail(m.ticketId)}
                             className="w-full bg-green-950/20 hover:bg-green-950/40 text-green-400 font-bold py-2 border border-green-500/30 rounded-lg text-center transition-all cursor-pointer"
                           >
                             Open Ticket Workspaces & Chat
                           </button>
-                        </div>
+                        </div> */}
                       </div>
                     );
                   }
