@@ -9,6 +9,8 @@ class CreateUsers(BaseModel):
     department:str
     role:str
     password_hash:str
+    google_access_token:str
+
 
 class UserLogin(BaseModel):
     email:str
@@ -22,6 +24,13 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class GoogleLoginRequest(BaseModel):
+    token: str
+
+
+
+
     
 
 

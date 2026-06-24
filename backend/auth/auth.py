@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta
 import jwt
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
 
 load_dotenv()
 
@@ -61,3 +64,19 @@ def current_user(token:str=Depends(oauth2_scheme)):
 
 def get_current_active_user(current_user: dict = Depends(current_user)):
     return current_user
+
+def verify_google_token(token: str) -> dict:
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    try:
+        # Verify Google token. Allow empty GOOGLE_CLIENT_ID for easier developer onboarding/local sandbox testing.
+        idinfo = id_token.verify_oauth2_token(
+            token,
+            google_requests.Request(),
+            audience=google_client_id if google_client_id else None
+        )
+        return idinfo
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid Google token: {str(e)}"
+        )

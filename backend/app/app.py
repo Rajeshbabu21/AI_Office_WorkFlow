@@ -1,11 +1,15 @@
 import os
+import requests
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 
 from fastapi import FastAPI, Depends, HTTPException, status, Form, File, UploadFile
 
 
-from auth.auth import create_access_token,current_user,get_password_hash,verify_password,ACCESS_TOKEN_EXPIRE_MINUTES
-from auth.authschema import UserLogin,CreateUsers,Token
+from auth.auth import create_access_token,current_user,get_password_hash,verify_password,ACCESS_TOKEN_EXPIRE_MINUTES,verify_google_token
+from auth.authschema import UserLogin,CreateUsers,Token,GoogleLoginRequest
+
+
 
 from database.db import supabase
 
@@ -29,8 +33,8 @@ app.add_middleware(
     allow_origins=[
     "http://localhost:5173", 
     "http://127.0.0.1:5173",
-    "https://resmax.vercel.app",
-    "https://resmax.onrender.com"
+    "https://ai-office-work-flow.vercel.app",
+    "https://ai-office-work-flow-backend.onrender.com="
     ],
     
     allow_credentials=True,
@@ -48,17 +52,63 @@ def read_root():
 @app.post("/register_users")
 def create_user(users: CreateUsers):
     try:
+        # 1. Verify Google access token
+        google_res = requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {users.google_access_token}"}
+        )
+        if google_res.status_code != 200:
+            raise HTTPException(status_code=400, detail="Google authentication failed. Invalid token.")
+            
+        google_info = google_res.json()
+        google_email = google_info.get("email")
+        
+        if not google_email:
+            raise HTTPException(status_code=400, detail="Could not retrieve email from Google.")
+            
+        if google_email.lower().strip() != users.email.lower().strip():
+            raise HTTPException(
+                status_code=400,
+                detail="The Google account email does not match the email entered in the registration form."
+            )
+            
+        # 2. Validate that Email is unique
+        email_check = supabase.table("users").select("email").eq("email", users.email).execute()
+        if email_check.data:
+            raise HTTPException(status_code=400, detail="Email is already registered.")
+            
+        # 3. Validate that Employee ID is unique
+        emp_check = supabase.table("users").select("employee_id").eq("employee_id", users.employee_id).execute()
+        if emp_check.data:
+            raise HTTPException(status_code=400, detail="Employee ID is already in use.")
+
+        # 4. Hash password securely
         users.password_hash = get_password_hash(users.password_hash)
-        data = users.dict()
-        response = supabase.table("users").insert(data).execute()
+        
+        # 5. Insert in database (excluding google_access_token)
+        user_data = users.dict()
+        user_data.pop("google_access_token", None)
+        
+        response = supabase.table("users").insert(user_data).execute()
         if not response.data:
             raise HTTPException(status_code=400, detail="User not created")
+            
+        # 6. Generate JWT access token and return to log the user in immediately
+        access_token = create_access_token(
+            data={"sub": users.email},
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        )
+        
         return {
-            "message": "User created successfully",
-            "data": response.data
+            "access_token": access_token,
+            "token_type": "bearer",
+            "message": "User registered successfully"
         }
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.post("/user_login")
 def login_users(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -98,6 +148,43 @@ def login_users(form_data: OAuth2PasswordRequestForm = Depends()):
     except Exception as e:
         print("LOGIN ERROR:", e)
         raise HTTPException(status_code=500, detail="Login failed")
+
+
+@app.post("/auth/google")
+def google_login(payload: GoogleLoginRequest):
+    try:
+        idinfo = verify_google_token(payload.token)
+        email = idinfo.get("email")
+        
+        # Check if user already exists
+        response = supabase.table("users").select("*").eq("email", email).execute()
+        
+        if response.data:
+            user = response.data[0]
+            # Log in the user and generate a JWT access token
+            access_token = create_access_token(
+                data={"sub": user["email"]},
+                expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+            )
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "registered": True
+            }
+        else:
+            # User doesn't exist, tell frontend they need to register
+            return {
+                "registered": False,
+                "email": email,
+                "full_name": idinfo.get("name", ""),
+                "message": "User not registered in the system. Please complete registration."
+            }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 
 @app.post("/insert_ticket")

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowRight, GitBranch, Shield, Key, User, BookOpen, Layers } from 'lucide-react';
-import { register, login } from '../../api/authApi.jsx';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { AlertCircle, ArrowRight, GitBranch, Shield, Key, User, BookOpen, Layers, CheckCircle } from 'lucide-react';
+import { register, login, loginWithGoogle } from '../../api/authApi.jsx';
+
+
 
 function Signup() {
   const [fullName, setFullName] = useState('');
@@ -9,9 +11,18 @@ function Signup() {
   const [department, setDepartment] = useState('IT Support');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [googleAccessToken, setGoogleAccessToken] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const isFormFilled = fullName.trim() !== '' && 
+                       employeeId.trim() !== '' && 
+                       department.trim() !== '' && 
+                       email.trim() !== '' && 
+                       password.trim() !== '';
 
   // If already logged in, redirect to homepage
   useEffect(() => {
@@ -21,24 +32,105 @@ function Signup() {
     }
   }, [navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Load Google Client SDK dynamically
+  useEffect(() => {
+    let script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const verifyWithGoogle = () => {
+    if (!window.google) {
+      setError('Google Sign-In SDK is not loaded. Please try again in a moment.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
-
+    setSuccessMessage('');
+    
     try {
-      // Step 1: Call registration endpoint
-      await register(email, password, fullName, department, employeeId);
-      // Step 2: Automatically log them in after registration
-      await login(email, password);
-      navigate('/');
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+        scope: 'openid email profile',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              // Fetch user's profile from Google userinfo API
+              const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: {
+                  Authorization: `Bearer ${tokenResponse.access_token}`
+                }
+              });
+              
+              if (!res.ok) {
+                throw new Error('Failed to verify token with Google.');
+              }
+              
+              const googleProfile = await res.json();
+              const googleEmail = googleProfile.email;
+              
+              if (!googleEmail) {
+                setError('Could not retrieve email from Google.');
+                setLoading(false);
+                return;
+              }
+              
+              if (googleEmail.toLowerCase().trim() === email.toLowerCase().trim()) {
+                setGoogleAccessToken(tokenResponse.access_token);
+                setIsVerified(true);
+                setSuccessMessage('Google email ownership verified successfully!');
+              } else {
+                setError('The Google account email does not match the email entered in the registration form.');
+              }
+            } catch (err) {
+              console.error(err);
+              setError('Failed to fetch user email from Google. Please try again.');
+            } finally {
+              setLoading(false);
+            }
+          } else {
+            setLoading(false);
+            setError('Google verification canceled or failed.');
+          }
+        },
+      });
+      client.requestAccessToken();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.detail || 'Registration failed. Please verify details and try again.');
+      setError('Failed to initialize Google verification client.');
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isVerified || !googleAccessToken) {
+      setError('Please verify your email with Google first.');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      await register(email, password, fullName, department, employeeId, googleAccessToken);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+
+
 
   return (
     <div className="min-h-screen bg-[#020308] text-gray-300 flex flex-col justify-center items-center p-4 relative overflow-hidden bg-grid-pattern">
@@ -75,6 +167,13 @@ function Signup() {
           </div>
         )}
 
+        {successMessage && (
+          <div className="mb-4 p-4 bg-emerald-950/20 border border-emerald-500/30 text-emerald-400 text-xs rounded-lg flex items-center gap-2 animate-fadeIn">
+            <CheckCircle className="w-4 h-4 shrink-0" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[11px] font-mono uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
@@ -86,8 +185,9 @@ function Signup() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
+              disabled={isVerified}
               placeholder="e.g. John Doe"
-              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600"
+              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
             />
           </div>
 
@@ -102,8 +202,9 @@ function Signup() {
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
+                disabled={isVerified}
                 placeholder="EMP102"
-                className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600"
+                className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
               />
             </div>
             <div>
@@ -114,7 +215,8 @@ function Signup() {
               <select 
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="w-full bg-[#030409] border border-blue-500/15 focus:border-blue-400 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all cursor-pointer"
+                disabled={isVerified}
+                className="w-full bg-[#030409] border border-blue-500/15 focus:border-blue-400 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all cursor-pointer disabled:opacity-60"
               >
                 <option value="IT Support">IT Support</option>
                 <option value="HR">HR</option>
@@ -130,14 +232,37 @@ function Signup() {
               <Shield className="w-3.5 h-3.5 text-cyan-400" />
               <span>Email Address</span>
             </label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="name@company.com"
-              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600"
-            />
+            <div className="flex gap-2">
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isVerified}
+                placeholder="name@company.com"
+                className="flex-1 bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
+              />
+              {isVerified && (
+                <span className="bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0">
+                  ✓ Verified
+                </span>
+              )}
+            </div>
+            {isVerified && (
+              <div className="text-right mt-1">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setIsVerified(false);
+                    setGoogleAccessToken('');
+                    setSuccessMessage('');
+                  }}
+                  className="text-[10px] text-red-400 hover:underline cursor-pointer"
+                >
+                  Change email / Reset verification
+                </button>
+              </div>
+            )}
           </div>
 
           <div>
@@ -150,15 +275,39 @@ function Signup() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isVerified}
               placeholder="••••••••"
-              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600"
+              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
             />
           </div>
 
+          {!isVerified && (
+            <div className="pt-2">
+              <button
+                type="button"
+                disabled={!isFormFilled || loading}
+                onClick={verifyWithGoogle}
+                className="w-full py-3 px-4 font-bold text-sm bg-[#0a0f24] hover:bg-[#12193b] disabled:bg-[#04060d] disabled:text-gray-600 disabled:border-gray-800 text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/40 rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  <span>Verify with Google</span>
+                )}
+              </button>
+              <p className="text-[10px] text-gray-500 text-center mt-2">
+                All fields are required. Fill out the form completely to enable verification.
+              </p>
+            </div>
+          )}
+
           <button 
             type="submit" 
-            disabled={loading}
-            className="w-full font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white py-3 rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.25)] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-4"
+            disabled={loading || !isVerified}
+            className="w-full font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white py-3 rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.25)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer mt-4"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -170,6 +319,9 @@ function Signup() {
             )}
           </button>
         </form>
+
+
+
 
         {/* Switch Mode */}
         <div className="mt-6 text-center text-xs border-t border-blue-500/5 pt-4">

@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowRight, GitBranch, Shield, Key } from 'lucide-react';
-import { login } from '../../api/authApi.jsx';
+import { AlertCircle, ArrowRight, GitBranch, Shield } from 'lucide-react';
+import { loginWithGoogle } from '../../api/authApi.jsx';
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sdkLoading, setSdkLoading] = useState(true);
   const navigate = useNavigate();
 
   // If already logged in, redirect to homepage
@@ -18,17 +17,67 @@ function Login() {
     }
   }, [navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Load Google Client SDK dynamically
+  useEffect(() => {
+    let script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+
+    const initGoogleSignIn = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+          callback: handleGoogleCredentialResponse,
+        });
+
+        const btnElement = document.getElementById('google-login-btn');
+        if (btnElement) {
+          window.google.accounts.id.renderButton(
+            btnElement,
+            { theme: 'outline', size: 'large', width: '100%', text: 'signin_with' }
+          );
+          setSdkLoading(false);
+        }
+      }
+    };
+
+    script.addEventListener('load', initGoogleSignIn);
+    if (window.google) {
+      initGoogleSignIn();
+    }
+
+    return () => {
+      script.removeEventListener('load', initGoogleSignIn);
+    };
+  }, []);
+
+  const handleGoogleCredentialResponse = async (response) => {
     setLoading(true);
     setError('');
-
     try {
-      await login(email, password);
-      navigate('/');
+      const googleToken = response.credential;
+      const data = await loginWithGoogle(googleToken);
+
+      if (data.registered) {
+        navigate('/');
+      } else {
+        // Redirect to signup with state pre-filled
+        navigate('/signup', {
+          state: {
+            googleToken,
+            email: data.email,
+            fullName: data.full_name
+          }
+        });
+      }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.detail || 'Authentication failed. Please check your credentials and try again.');
+      setError(err.response?.data?.detail || 'Google Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +107,7 @@ function Login() {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h2>
           <p className="text-xs text-gray-500 mt-2">
-            Sign in to access the live ticket automation console and workflow pipelines
+            Sign in using your Google account to access the live ticket automation console and workflow pipelines
           </p>
         </div>
 
@@ -69,52 +118,32 @@ function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-[11px] font-mono uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Email Address</span>
-            </label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="name@company.com"
-              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-3 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600"
-            />
-          </div>
+        <div className="py-4 flex flex-col items-center justify-center">
+          {loading ? (
+            <div className="flex flex-col items-center gap-3 text-sm text-cyan-400 py-6">
+              <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
+              <span>Authenticating with AutoFlow...</span>
+            </div>
+          ) : (
+            <div className="w-full relative">
+              {sdkLoading && (
+                <div className="w-full py-2.5 px-4 font-semibold text-sm bg-[#0a0f24] text-blue-400 border border-blue-500/10 rounded-lg flex items-center justify-center gap-2 animate-pulse absolute inset-0 z-10 pointer-events-none">
+                  <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
+                  <span>Loading Sign-In...</span>
+                </div>
+              )}
+              <div id="google-login-btn" className="flex justify-center w-full min-h-[44px]"></div>
+            </div>
+          )}
+        </div>
 
-          <div>
-            <label className="block text-[11px] font-mono uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
-              <Key className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Password</span>
-            </label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-3 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600"
-            />
+        <div className="mt-6 p-4 bg-blue-950/10 border border-blue-500/5 rounded-lg flex gap-3 text-left">
+          <Shield className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+          <div className="text-[11px] text-gray-500 leading-normal">
+            <span className="text-gray-400 font-semibold block mb-0.5">Enterprise Single Sign-On (SSO)</span>
+            Access to this console requires authentication with a verified employee account. Google credentials are encrypted and verified directly.
           </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white py-3.5 rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.25)] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-4"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <span>Sign In to Console</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
+        </div>
 
         {/* Switch Mode */}
         <div className="mt-8 text-center text-xs border-t border-blue-500/5 pt-6">
@@ -133,3 +162,4 @@ function Login() {
 }
 
 export default Login;
+
