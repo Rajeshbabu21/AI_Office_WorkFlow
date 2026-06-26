@@ -133,7 +133,7 @@ function Signup() {
 
 
   return (
-    <div className="min-h-screen bg-[#020308] text-gray-300 flex flex-col justify-center items-center p-4 relative overflow-hidden bg-grid-pattern">
+    <div className="min-h-screen bg-[#020503] text-gray-300 flex flex-col justify-center items-center p-4 relative overflow-hidden bg-grid-pattern">
       {/* Background glowing circles */}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-950/20 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-950/15 rounded-full blur-[120px] pointer-events-none"></div>
@@ -152,7 +152,7 @@ function Signup() {
       </div>
 
       {/* Register Box */}
-      <div className="w-full max-w-md bg-[#090b16]/85 backdrop-blur-md border border-blue-500/15 rounded-2xl p-8 shadow-2xl relative z-10 glow-box-blue animate-fadeIn">
+      <div className="w-full max-w-md bg-[#050a06]/85 backdrop-blur-md border border-blue-500/15 rounded-2xl p-8 shadow-2xl relative z-10 glow-box-blue animate-fadeIn">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Create Account</h2>
           <p className="text-xs text-gray-500 mt-2">
@@ -187,7 +187,7 @@ function Signup() {
               required
               disabled={isVerified}
               placeholder="e.g. John Doe"
-              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
+              className="w-full bg-[#030604]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
             />
           </div>
 
@@ -204,7 +204,7 @@ function Signup() {
                 required
                 disabled={isVerified}
                 placeholder="EMP102"
-                className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
+                className="w-full bg-[#030604]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
               />
             </div>
             <div>
@@ -216,7 +216,7 @@ function Signup() {
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 disabled={isVerified}
-                className="w-full bg-[#030409] border border-blue-500/15 focus:border-blue-400 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all cursor-pointer disabled:opacity-60"
+                className="w-full bg-[#030604] border border-blue-500/15 focus:border-blue-400 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all cursor-pointer disabled:opacity-60"
               >
                 <option value="IT Support">IT Support</option>
                 <option value="HR">HR</option>
@@ -240,7 +240,7 @@ function Signup() {
                 required
                 disabled={isVerified}
                 placeholder="name@company.com"
-                className="flex-1 bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
+                className="flex-1 bg-[#030604]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
               />
               {isVerified && (
                 <span className="bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0">
@@ -277,7 +277,7 @@ function Signup() {
               required
               disabled={isVerified}
               placeholder="••••••••"
-              className="w-full bg-[#030409]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
+              className="w-full bg-[#030604]/70 border border-blue-500/15 focus:border-blue-400 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition-all placeholder:text-gray-600 disabled:opacity-60"
             />
           </div>
 
@@ -287,7 +287,7 @@ function Signup() {
                 type="button"
                 disabled={!isFormFilled || loading}
                 onClick={verifyWithGoogle}
-                className="w-full py-3 px-4 font-bold text-sm bg-[#0a0f24] hover:bg-[#12193b] disabled:bg-[#04060d] disabled:text-gray-600 disabled:border-gray-800 text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/40 rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                className="w-full py-3 px-4 font-bold text-sm bg-[#050a06] hover:bg-[#12193b] disabled:bg-[#04060d] disabled:text-gray-600 disabled:border-gray-800 text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/40 rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-[0_0_15px_rgba(59,130,246,0.1)]"
               >
                 {loading ? (
                   <>

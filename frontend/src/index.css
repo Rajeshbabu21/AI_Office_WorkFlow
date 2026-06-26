@@ -2,17 +2,43 @@
 
 @import "tailwindcss";
 
+@theme {
+  --color-blue-50: #f0fdf4;
+  --color-blue-100: #dcfce7;
+  --color-blue-200: #bbf7d0;
+  --color-blue-300: #86efac;
+  --color-blue-400: #4ade80;
+  --color-blue-500: #22c55e;
+  --color-blue-600: #16a34a;
+  --color-blue-700: #15803d;
+  --color-blue-800: #166534;
+  --color-blue-900: #14532d;
+  --color-blue-950: #052e16;
+
+  --color-cyan-50: #ecfccb;
+  --color-cyan-100: #d9f99d;
+  --color-cyan-200: #bef264;
+  --color-cyan-300: #a3e635;
+  --color-cyan-400: #22c55e;
+  --color-cyan-500: #16a34a;
+  --color-cyan-600: #15803d;
+  --color-cyan-700: #166534;
+  --color-cyan-800: #14532d;
+  --color-cyan-900: #0f4021;
+  --color-cyan-950: #052e16;
+}
+
 :root {
   --font-sans: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  background-color: #020308;
+  background-color: #020503;
   color: #d1d5db;
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background-color: #020308;
+  background-color: #020503;
   color: #e5e7eb;
   overflow-x: hidden;
 }
@@ -28,44 +54,44 @@ body {
   flex-direction: column;
 }
 
-/* Custom Grid Background Pattern - Deep Navy/Blue grids */
+/* Custom Grid Background Pattern - Deep Forest Green grids */
 .bg-grid-pattern {
   background-size: 50px 50px;
   background-image: 
-    linear-gradient(to right, rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
 }
 
-/* Glow effects - Cyber Blue/Cyan */
+/* Glow effects - Cyber Neon Green */
 .text-glow-blue {
-  text-shadow: 0 0 12px rgba(59, 130, 246, 0.4), 0 0 24px rgba(6, 182, 212, 0.2);
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.4), 0 0 24px rgba(74, 222, 128, 0.2);
 }
 
 .text-glow-blue-strong {
-  text-shadow: 0 0 20px rgba(59, 130, 246, 0.65), 0 0 40px rgba(6, 182, 212, 0.35);
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.65), 0 0 40px rgba(74, 222, 128, 0.35);
 }
 
 .glow-box-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
 }
 
 .glow-box-blue-hover:hover {
-  box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 0 25px rgba(74, 222, 128, 0.2);
 }
 
-/* Smooth custom scrollbar matching the navy theme */
+/* Smooth custom scrollbar matching the green/black theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #020308;
+  background: #020503;
 }
 ::-webkit-scrollbar-thumb {
-  background: #0d172e;
+  background: #0b1c0e;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6;
+  background: #22c55e;
 }
 
 /* Scanline animation */
@@ -91,7 +117,7 @@ body {
   left: 0;
   bottom: 0;
   right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(59, 130, 246, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(34, 197, 94, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.01));
   z-index: 2;
   background-size: 100% 4px, 6px 100%;
   pointer-events: none;

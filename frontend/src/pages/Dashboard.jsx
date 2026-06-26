@@ -368,13 +368,13 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020308] text-gray-300 font-sans flex flex-col relative bg-grid-pattern overflow-hidden h-screen">
+    <div className="min-h-screen bg-[#020503] text-gray-300 font-sans flex flex-col relative bg-grid-pattern overflow-hidden h-screen">
       {/* Background glow filters */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-950/15 rounded-full blur-[160px] pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-950/10 rounded-full blur-[160px] pointer-events-none"></div>
 
       {/* HEADER SECTION */}
-      <header className="w-full bg-[#020308]/90 border-b border-blue-500/10 backdrop-blur-md z-30 shrink-0">
+      <header className="w-full bg-[#020503]/90 border-b border-blue-500/10 backdrop-blur-md z-30 shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-3 hover:opacity-85 transition-opacity">
@@ -481,7 +481,7 @@ function Dashboard() {
               </div>
 
               {/* Collapsible details preview */}
-              <div className="bg-[#030409]/60 border border-blue-500/10 rounded-lg p-2.5 mt-1 text-xs">
+              <div className="bg-[#030604]/60 border border-blue-500/10 rounded-lg p-2.5 mt-1 text-xs">
                 <span className="text-gray-500 font-mono text-[9px] block mb-1">USER PROBLEM DESCRIPTION:</span>
                 <p className="text-gray-300 leading-relaxed font-sans text-[11px]">{ticketDetail.ticket.description}</p>
               </div>
@@ -543,7 +543,7 @@ function Dashboard() {
                 {ticketDetail.history && ticketDetail.history.length > 0 && (
                   <div className="text-left font-mono text-[10px]">
                     <span className="text-gray-500 font-bold block mb-1">// System state audit trail:</span>
-                    <div className="bg-[#030409] border border-blue-500/10 p-3 rounded-lg space-y-1 text-gray-400 max-h-[120px] overflow-y-auto scrollbar">
+                    <div className="bg-[#030604] border border-blue-500/10 p-3 rounded-lg space-y-1 text-gray-400 max-h-[120px] overflow-y-auto scrollbar">
                       {ticketDetail.history.map((h, idx) => (
                         <div key={idx} className="flex gap-2">
                           <span className="text-gray-600">[{new Date(h.created_at).toLocaleTimeString()}]</span>
@@ -673,7 +673,7 @@ function Dashboard() {
                             <div
                               key={t.id}
                               onClick={() => fetchTicketDetail(t.id)}
-                              className="p-5 border border-blue-500/10 bg-[#030409]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left"
+                              className="p-5 border border-blue-500/10 bg-[#030604]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left"
                             >
                               <div>
                                 <div className="flex items-center justify-between mb-3 font-mono text-[10px]">
@@ -911,7 +911,7 @@ function Dashboard() {
       {/* MANUAL JIRA ESCALATION MODAL */}
       {showEscalateModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-[#090b16] border border-purple-500/20 rounded-2xl overflow-hidden shadow-2xl relative glow-box-purple text-left">
+          <div className="w-full max-w-md bg-[#050a06] border border-purple-500/20 rounded-2xl overflow-hidden shadow-2xl relative glow-box-purple text-left">
 
             <div className="p-5 border-b border-purple-500/15 flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">

@@ -84,7 +84,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020308] text-gray-300 flex flex-col justify-center items-center p-4 relative overflow-hidden bg-grid-pattern">
+    <div className="min-h-screen bg-[#020503] text-gray-300 flex flex-col justify-center items-center p-4 relative overflow-hidden bg-grid-pattern">
       {/* Background glowing circles */}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-950/20 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-950/15 rounded-full blur-[120px] pointer-events-none"></div>
@@ -103,7 +103,7 @@ function Login() {
       </div>
 
       {/* Login Box */}
-      <div className="w-full max-w-md bg-[#090b16]/85 backdrop-blur-md border border-blue-500/15 rounded-2xl p-8 shadow-2xl relative z-10 glow-box-blue animate-fadeIn">
+      <div className="w-full max-w-md bg-[#050a06]/85 backdrop-blur-md border border-blue-500/15 rounded-2xl p-8 shadow-2xl relative z-10 glow-box-blue animate-fadeIn">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h2>
           <p className="text-xs text-gray-500 mt-2">
@@ -127,7 +127,7 @@ function Login() {
           ) : (
             <div className="w-full relative">
               {sdkLoading && (
-                <div className="w-full py-2.5 px-4 font-semibold text-sm bg-[#0a0f24] text-blue-400 border border-blue-500/10 rounded-lg flex items-center justify-center gap-2 animate-pulse absolute inset-0 z-10 pointer-events-none">
+                <div className="w-full py-2.5 px-4 font-semibold text-sm bg-[#050a06] text-blue-400 border border-blue-500/10 rounded-lg flex items-center justify-center gap-2 animate-pulse absolute inset-0 z-10 pointer-events-none">
                   <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
                   <span>Loading Sign-In...</span>
                 </div>
