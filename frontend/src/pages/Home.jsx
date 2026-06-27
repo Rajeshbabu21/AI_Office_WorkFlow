@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   Zap, Shield, Cpu, Activity, FileText, Layers, CheckCircle,
-  AlertCircle, ArrowRight, ChevronRight, Search, BarChart3,
-  MessageSquare, Mail, Terminal, ExternalLink, GitBranch,
+  AlertCircle, ArrowRight, Search,
+  GitBranch,
   Menu, X, Server, Database, Globe
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -18,32 +18,175 @@ function Home() {
   // Configuration for visual agent console steps represented by icons
   const agentConsoleSteps = {
     classification: [
-      { icon: Server, color: 'text-cyan-400', glow: 'shadow-[0_0_15px_rgba(34,211,238,0.25)]', border: 'border-cyan-500/30', label: 'Ingestion', desc: 'Ingested stream ticket #41029' },
-      { icon: Cpu, color: 'text-blue-400', glow: 'shadow-[0_0_15px_rgba(96,165,250,0.25)]', border: 'border-blue-500/30', label: 'NLP Analyze', desc: 'Processed sentiment vector matrix' },
-      { icon: Layers, color: 'text-purple-400', glow: 'shadow-[0_0_15px_rgba(192,132,252,0.25)]', border: 'border-purple-500/30', label: 'Classify', desc: 'Classified: VPN Issue (Dept: IT)' },
-      { icon: AlertCircle, color: 'text-yellow-500', glow: 'shadow-[0_0_15px_rgba(234,179,8,0.25)]', border: 'border-yellow-500/30', label: 'Priority Check', desc: 'Severity Tag: Urgent High priority' },
-      { icon: GitBranch, color: 'text-green-400', glow: 'shadow-[0_0_15px_rgba(74,222,128,0.25)]', border: 'border-green-500/30', label: 'State Route', desc: 'Routing state to RAG agent' }
+      {
+        icon: Server,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Receive Ticket',
+        desc: 'New support ticket received.'
+      },
+      {
+        icon: Cpu,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Read Request',
+        desc: 'AI reads and understands the issue.'
+      },
+      {
+        icon: Layers,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Find Category',
+        desc: 'Issue classified as VPN problem.'
+      },
+      {
+        icon: AlertCircle,
+        color: 'text-yellow-500',
+        glow: 'shadow-[0_0_15px_rgba(234,179,8,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Set Priority',
+        desc: 'Priority set to High.'
+      },
+      {
+        icon: GitBranch,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Next Step',
+        desc: 'Sent to knowledge search.'
+      }
     ],
+
     rag_retrieval: [
-      { icon: FileText, color: 'text-cyan-400', glow: 'shadow-[0_0_15px_rgba(34,211,238,0.25)]', border: 'border-cyan-500/30', label: 'Keywords', desc: 'Constructed search query text' },
-      { icon: Cpu, color: 'text-blue-400', glow: 'shadow-[0_0_15px_rgba(96,165,250,0.25)]', border: 'border-blue-500/30', label: 'Embedding', desc: 'Computed coordinates (3072d)' },
-      { icon: Layers, color: 'text-purple-400', glow: 'shadow-[0_0_15px_rgba(192,132,252,0.25)]', border: 'border-purple-500/30', label: 'Vector Slice', desc: 'Sliced vector array to 384 dimensions' },
-      { icon: Database, color: 'text-yellow-400', glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]', border: 'border-yellow-500/30', label: 'DB Query', desc: 'Invoked match_sop_chunks SQL RPC' },
-      { icon: CheckCircle, color: 'text-green-400', glow: 'shadow-[0_0_15px_rgba(74,222,128,0.25)]', border: 'border-green-500/30', label: 'DB Match', desc: 'Matched SOP-012 (Similarity: 0.892)' }
+      {
+        icon: FileText,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Search',
+        desc: 'Looking for matching documents.'
+      },
+      {
+        icon: Cpu,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Create Vector',
+        desc: 'AI converts the request into vectors.'
+      },
+      {
+        icon: Layers,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Compare',
+        desc: 'Compared with stored knowledge.'
+      },
+      {
+        icon: Database,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Find Match',
+        desc: 'Searching the knowledge database.'
+      },
+      {
+        icon: CheckCircle,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Result Found',
+        desc: 'Best matching solution found.'
+      }
     ],
+
     resolution: [
-      { icon: Shield, color: 'text-cyan-400', glow: 'shadow-[0_0_15px_rgba(34,211,238,0.25)]', border: 'border-cyan-500/30', label: 'Compliance', desc: 'Zero-trust rules configured' },
-      { icon: FileText, color: 'text-blue-400', glow: 'shadow-[0_0_15px_rgba(96,165,250,0.25)]', border: 'border-blue-500/30', label: 'Context Prep', desc: 'Injected retrieved database SOP text' },
-      { icon: Cpu, color: 'text-purple-400', glow: 'shadow-[0_0_15px_rgba(192,132,252,0.25)]', border: 'border-purple-500/30', label: 'LLM Invoke', desc: 'Triggered Gemini-Pro model synthesis' },
-      { icon: Activity, color: 'text-yellow-500', glow: 'shadow-[0_0_15px_rgba(234,179,8,0.25)]', border: 'border-yellow-500/30', label: 'Streaming', desc: 'Response tokens generated: 98' },
-      { icon: CheckCircle, color: 'text-green-400', glow: 'shadow-[0_0_15px_rgba(74,222,128,0.25)]', border: 'border-green-500/30', label: 'Validate', desc: 'Validated resolution against SOP' }
+      {
+        icon: Shield,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Check Rules',
+        desc: 'Verified company guidelines.'
+      },
+      {
+        icon: FileText,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Use Context',
+        desc: 'Added the retrieved information.'
+      },
+      {
+        icon: Cpu,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Generate Reply',
+        desc: 'AI writes the response.'
+      },
+      {
+        icon: Activity,
+        color: 'text-yellow-500',
+        glow: 'shadow-[0_0_15px_rgba(234,179,8,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Create Answer',
+        desc: 'Preparing the final reply.'
+      },
+      {
+        icon: CheckCircle,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Ready',
+        desc: 'Response is checked and ready.'
+      }
     ],
+
     escalation: [
-      { icon: Search, color: 'text-cyan-400', glow: 'shadow-[0_0_15px_rgba(34,211,238,0.25)]', border: 'border-cyan-500/30', label: 'SLA Audit', desc: 'Initialized similarity check logs' },
-      { icon: Activity, color: 'text-blue-400', glow: 'shadow-[0_0_15px_rgba(96,165,250,0.25)]', border: 'border-blue-500/30', label: 'Threshold', desc: 'Evaluating similarity vs SLA rules' },
-      { icon: CheckCircle, color: 'text-purple-400', glow: 'shadow-[0_0_15px_rgba(192,132,252,0.25)]', border: 'border-purple-500/30', label: 'SLA Result', desc: 'Similarity score 0.892 >= 0.70' },
-      { icon: Shield, color: 'text-yellow-500', glow: 'shadow-[0_0_15px_rgba(234,179,8,0.25)]', border: 'border-yellow-500/30', label: 'Decision', desc: 'Self-resolved; human queue bypassed' },
-      { icon: Zap, color: 'text-green-400', glow: 'shadow-[0_0_15px_rgba(74,222,128,0.25)]', border: 'border-green-500/30', label: 'Dispatch', desc: 'Dispatched autonomous ticket close' }
+      {
+        icon: Search,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Review',
+        desc: 'Checking answer quality.'
+      },
+      {
+        icon: Activity,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Confidence',
+        desc: 'AI checks confidence score.'
+      },
+      {
+        icon: CheckCircle,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Decision',
+        desc: 'Answer meets quality standards.'
+      },
+      {
+        icon: Shield,
+        color: 'text-yellow-500',
+        glow: 'shadow-[0_0_15px_rgba(234,179,8,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Escalate?',
+        desc: 'No human help is needed.'
+      },
+      {
+        icon: Zap,
+        color: 'text-yellow-400',
+        glow: 'shadow-[0_0_15px_rgba(250,204,21,0.25)]',
+        border: 'border-yellow-500/30',
+        label: 'Complete',
+        desc: 'Ticket closed successfully.'
+      }
     ]
   };
 
@@ -202,20 +345,17 @@ If issues persist, please contact the local network administrator.`
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
             <a href="#workflow" className="text-gray-400 hover:text-blue-400 transition-colors">Workflow</a>
-            <a href="#features" className="text-gray-400 hover:text-blue-400 transition-colors">Features</a>
+            {/* <a href="#features" className="text-gray-400 hover:text-blue-400 transition-colors">Features</a> */}
             <a href="#agents" className="text-gray-400 hover:text-blue-400 transition-colors">AI Agents</a>
             {/* <a href="#analytics" className="text-gray-400 hover:text-blue-400 transition-colors">Analytics</a> */}
             <a href="#integrations" className="text-gray-400 hover:text-blue-400 transition-colors">Integrations</a>
+            <a href="#techstack" className="text-gray-400 hover:text-blue-400 transition-colors">Tech Stack</a>
+
           </nav>
 
           {/* Action Button */}
           <div className="hidden md:flex items-center gap-4">
-            <a
-              href="#sandbox"
-              className="text-sm font-medium text-blue-400 border border-blue-500/30 hover:border-blue-400 bg-blue-500/5 hover:bg-blue-500/10 px-4 py-2 rounded transition-all duration-300"
-            >
-              Interactive Demo
-            </a>
+
             {token ? (
               <div className="flex items-center gap-3">
                 <Link
@@ -476,13 +616,13 @@ If issues persist, please contact the local network administrator.`
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 text-glow-blue">Automations.</span>
               </h2>
               <p className="text-gray-400 mt-3 text-sm md:text-base max-w-xl">
-                Real-time math. Instant RAG updates. Built for support systems that demand bulletproof execution.
+                Real-time AI workflows. Instant RAG updates. Built to automate, orchestrate, and scale intelligent applications.
               </p>
             </div>
             <div className="mt-4 md:mt-0">
               <a href="#sandbox" className="text-xs font-mono text-cyan-400 flex items-center gap-1 hover:text-cyan-300 transition-colors">
-                <span>See live execution trace</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                {/* <span>See live execution trace</span> */}
+                {/* <ArrowRight className="w-3.5 h-3.5" /> */}
               </a>
             </div>
           </div>
@@ -498,10 +638,11 @@ If issues persist, please contact the local network administrator.`
               </div>
               <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">Ticket Submission</h3>
               <p className="text-gray-400 text-sm mt-2 leading-relaxed">
-                Tickets are ingested from multiple sources: emails, Slack messages, custom portal widgets, or standard APIs.
+                {/* Tickets are ingested from multiple sources: emails, Slack messages, custom portal widgets, or standard APIs. */}
+                Users submit an issue ticket through the support portal. The system validates the request and creates a unique ticket ID for tracking.
               </p>
               <div className="mt-8 flex items-center justify-between border-t border-blue-500/5 pt-4">
-                <span className="text-[10px] font-mono text-blue-500/60 uppercase">INGESTION AGENT</span>
+                <span className="text-[10px] font-mono text-blue-500/60 uppercase">USER INPUT</span>
                 <span className="text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 flex items-center gap-1 transition-colors">
                   READY <ArrowRight className="w-3 h-3" />
                 </span>
@@ -516,10 +657,11 @@ If issues persist, please contact the local network administrator.`
               </div>
               <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">AI Classification</h3>
               <p className="text-gray-400 text-sm mt-2 leading-relaxed">
-                Natural Language Processing identifies categories (e.g. VPN issues, Payroll) and tags severity indices automatically.
+                Gemini analyzes the ticket, classifies the issue, assigns the appropriate category, predicts priority, and generates a confidence score automatically.
+                {/* Natural Language Processing identifies categories (e.g. VPN issues, Payroll) and tags severity indices automatically. */}
               </p>
               <div className="mt-8 flex items-center justify-between border-t border-blue-500/5 pt-4">
-                <span className="text-[10px] font-mono text-blue-500/60 uppercase">ROUTING ENGINE</span>
+                <span className="text-[10px] font-mono text-blue-500/60 uppercase">GEMINI AI</span>
                 <span className="text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 flex items-center gap-1 transition-colors">
                   READY <ArrowRight className="w-3 h-3" />
                 </span>
@@ -555,7 +697,7 @@ If issues persist, please contact the local network administrator.`
                 Gemini constructs custom, polite resolutions using retrieved text chunks, maintaining zero-trust strict compliance.
               </p>
               <div className="mt-8 flex items-center justify-between border-t border-blue-500/5 pt-4">
-                <span className="text-[10px] font-mono text-blue-500/60 uppercase">AI SYNTHESIS</span>
+                <span className="text-[10px] font-mono text-blue-500/60 uppercase">AI RESPONSE</span>
                 <span className="text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 flex items-center gap-1 transition-colors">
                   READY <ArrowRight className="w-3 h-3" />
                 </span>
@@ -573,7 +715,7 @@ If issues persist, please contact the local network administrator.`
                 If the similarity matching fails to meet thresholds, the escalation engine alerts appropriate department personnel.
               </p>
               <div className="mt-8 flex items-center justify-between border-t border-blue-500/5 pt-4">
-                <span className="text-[10px] font-mono text-blue-500/60 uppercase">LANGGRAPH CHECK</span>
+                <span className="text-[10px] font-mono text-blue-500/60 uppercase">AI CHECK</span>
                 <span className="text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 flex items-center gap-1 transition-colors">
                   READY <ArrowRight className="w-3 h-3" />
                 </span>
@@ -604,8 +746,7 @@ If issues persist, please contact the local network administrator.`
       </section>
 
 
-      {/* HOW IT WORKS SECTION (TIMELINE) */}
-      <section className="py-20 md:py-28 relative bg-[#020503]">
+      {/* <section className="py-20 md:py-28 relative bg-[#020503]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="text-center max-w-3xl mx-auto mb-20">
@@ -615,14 +756,11 @@ If issues persist, please contact the local network administrator.`
             </h2>
           </div>
 
-          {/* Timeline diagram container */}
           <div className="relative">
-            {/* Line connector */}
             <div className="hidden lg:block absolute top-[52px] left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500/10 via-blue-500/40 to-blue-500/10 z-0"></div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 relative z-10">
 
-              {/* Step 1 */}
               <div
                 className={`text-center p-4 border rounded-lg transition-all duration-300 cursor-pointer ${activeStep === 0
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-105'
@@ -637,7 +775,6 @@ If issues persist, please contact the local network administrator.`
                 <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">Inputs description, title and department settings</p>
               </div>
 
-              {/* Step 2 */}
               <div
                 className={`text-center p-4 border rounded-lg transition-all duration-300 cursor-pointer ${activeStep === 1
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-105'
@@ -652,7 +789,6 @@ If issues persist, please contact the local network administrator.`
                 <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">NLP understands severity, categories and routing metrics</p>
               </div>
 
-              {/* Step 3 */}
               <div
                 className={`text-center p-4 border rounded-lg transition-all duration-300 cursor-pointer ${activeStep === 2
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-105'
@@ -667,7 +803,6 @@ If issues persist, please contact the local network administrator.`
                 <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">384-dimensional vector database search extracts context</p>
               </div>
 
-              {/* Step 4 */}
               <div
                 className={`text-center p-4 border rounded-lg transition-all duration-300 cursor-pointer ${activeStep === 3
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-105'
@@ -682,7 +817,6 @@ If issues persist, please contact the local network administrator.`
                 <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">Gemini uses retrieved context to create draft answer</p>
               </div>
 
-              {/* Step 5 */}
               <div
                 className={`text-center p-4 border rounded-lg transition-all duration-300 cursor-pointer ${activeStep === 4
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-105'
@@ -697,7 +831,6 @@ If issues persist, please contact the local network administrator.`
                 <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">System triggers Jira callback if similarity threshold misses</p>
               </div>
 
-              {/* Step 6 */}
               <div
                 className={`text-center p-4 border rounded-lg transition-all duration-300 cursor-pointer ${activeStep === 5
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-105'
@@ -716,7 +849,7 @@ If issues persist, please contact the local network administrator.`
           </div>
 
         </div>
-      </section>
+      </section> */}
 
       {/* AI AGENTS SECTION */}
       <section id="agents" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#000000]">
@@ -729,7 +862,8 @@ If issues persist, please contact the local network administrator.`
                 Autonomous <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 text-glow-blue">LLM Agents.</span>
               </h2>
               <p className="text-gray-400 mt-3 text-sm md:text-base max-w-xl">
-                Dynamic execution graphs handling distinct task scopes under strict SLAs.
+                AI agents that think, decide, and act autonomously.
+
               </p>
             </div>
 
@@ -751,68 +885,16 @@ If issues persist, please contact the local network administrator.`
           </div>
 
           {/* Interactive Agent Board */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            {/* Agent Profile Card */}
-            <div className="lg:col-span-1 border border-blue-500/20 rounded-xl p-6 bg-black relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
-
-              <div>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/30 rounded-full flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(59,130,246,0.15)]">
-                    {activeAgent === 'classification' && <Layers className="w-6 h-6" />}
-                    {activeAgent === 'rag_retrieval' && <Search className="w-6 h-6" />}
-                    {activeAgent === 'resolution' && <Cpu className="w-6 h-6" />}
-                    {activeAgent === 'escalation' && <GitBranch className="w-6 h-6" />}
-                  </div>
-                  <div>
-                    <h4 className="text-white font-bold capitalize text-lg">{activeAgent.replace('_', ' ')} Agent</h4>
-                    <span className="text-[10px] font-mono text-blue-400 px-2 py-0.5 rounded border border-blue-500/30 bg-blue-500/10 uppercase tracking-widest">
-                      ACTIVE
-                    </span>
-                  </div>
-                </div>
-
-                {/* Agent parameters */}
-                <div className="space-y-4 font-mono text-xs border-t border-blue-500/10 pt-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">TASK_SCOPE:</span>
-                    <span className="text-white">
-                      {activeAgent === 'classification' && 'Ingestion, sorting, priority tagging'}
-                      {activeAgent === 'rag_retrieval' && 'Vector search, embedding sliced matching'}
-                      {activeAgent === 'resolution' && 'Context rendering & response synthesis'}
-                      {activeAgent === 'escalation' && 'SLA tracking & webhook dispatcher'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">LLM_ENGINE:</span>
-                    <span className="text-cyan-400">Gemini Pro 1.5</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">ACCURACY:</span>
-                    <span className="text-white">
-                      {activeAgent === 'classification' && '99.1%'}
-                      {activeAgent === 'rag_retrieval' && '98.5% (sliced 384d)'}
-                      {activeAgent === 'resolution' && '96.2%'}
-                      {activeAgent === 'escalation' && '100% Deterministic'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 pt-4 border-t border-blue-500/10 text-xs text-gray-500 leading-relaxed">
-                🤖 This agent operates inside our LangGraph state framework, querying the database and modifying states via transactional calls.
-              </div>
-            </div>
+          <div className="flex justify-center">
 
             {/* Agent Live Console Simulation (Visual Timeline) */}
-            <div className="lg:col-span-2 border border-blue-500/15 rounded-xl bg-black overflow-hidden font-mono text-xs">
+            <div className="w-full max-w-4xl border border-blue-500/15 rounded-xl bg-black overflow-hidden font-mono text-xs">
               <div className="bg-gray-950 px-4 py-2.5 flex items-center justify-between border-b border-blue-500/10 text-blue-400">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-blue-500 pulse-dot"></span>
-                  <span>Agent Graph Visualizer // {activeAgent.toUpperCase()}_ENGINE</span>
+                  <span> AutoFlow AI Visualizer -  {activeAgent.toUpperCase()}_ENGINE</span>
                 </div>
-                <div className="text-[10px] text-gray-600">STATE: ACTIVE</div>
+                {/* <div className="text-[10px] text-gray-600">STATE: ACTIVE</div> */}
               </div>
 
               <div className="p-5 h-[340px] bg-[#020503] flex items-center justify-center relative overflow-hidden">
@@ -859,183 +941,7 @@ If issues persist, please contact the local network administrator.`
         </div>
       </section>
 
-      {/* INTERACTIVE DEMO SANDBOX */}
-      <section id="sandbox" className="py-20 md:py-28 bg-[#020503] relative border-t border-blue-500/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-xs font-mono tracking-widest text-cyan-400 uppercase border border-blue-500/20 bg-blue-500/5 px-3 py-1 rounded">Interactive Sandbox</span>
-            <h2 className="text-3xl md:text-5xl font-bold text-white mt-4 tracking-tight">
-              Test the AI Agent <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 text-glow-blue">workflow.</span>
-            </h2>
-            <p className="text-gray-400 mt-4 text-sm md:text-base">
-              Submit a support query below to run the RAG pipeline. See the classification, retrieved database SOP chunks, and generated resolution in real time.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-6xl mx-auto">
-
-            {/* Input Form */}
-            <form onSubmit={triggerSandboxSubmit} className="lg:col-span-5 border border-blue-500/20 rounded-xl p-6 bg-black flex flex-col justify-between">
-              <div className="space-y-5">
-                <div className="flex items-center justify-between border-b border-blue-500/10 pb-3">
-                  <span className="text-sm font-bold text-white flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-cyan-400" />
-                    <span>Create Test Ticket</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={clearSandbox}
-                    className="text-[10px] font-mono text-gray-500 hover:text-cyan-400 transition-colors"
-                  >
-                    Clear Outputs
-                  </button>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="ticket-title-input" className="text-[11px] font-mono uppercase text-gray-400">Ticket Title</label>
-                  <input
-                    id="ticket-title-input"
-                    type="text"
-                    value={ticketTitle}
-                    onChange={(e) => setTicketTitle(e.target.value)}
-                    className="bg-black border border-blue-500/20 rounded p-2.5 text-xs text-white font-mono focus:border-blue-500 focus:outline-none transition-colors"
-                    placeholder="e.g. Cannot connect to VPN"
-                    required
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="ticket-desc-input" className="text-[11px] font-mono uppercase text-gray-400">Description</label>
-                  <textarea
-                    id="ticket-desc-input"
-                    value={ticketDesc}
-                    onChange={(e) => setTicketDesc(e.target.value)}
-                    rows={4}
-                    className="bg-black border border-blue-500/20 rounded p-2.5 text-xs text-white font-mono focus:border-blue-500 focus:outline-none transition-colors resize-none"
-                    placeholder="Describe the issue in detail..."
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <button
-                  type="submit"
-                  disabled={sandboxLoading}
-                  className="w-full font-bold bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-500 hover:to-cyan-400 py-3 rounded transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {sandboxLoading ? (
-                    <>
-                      <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-                      <span>Processing Agent Pipeline...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-4 h-4 text-white" />
-                      <span>Trigger Workflow Pipeline</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* Live Terminal Logger & Output */}
-            <div className="lg:col-span-7 border border-blue-500/20 rounded-xl bg-black overflow-hidden flex flex-col justify-between min-h-[350px]">
-
-              {/* Terminal Header */}
-              <div className="bg-gray-950 px-4 py-2.5 border-b border-blue-500/10 flex items-center justify-between text-blue-400 font-mono text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                  <span>Pipeline Execution Logger</span>
-                </div>
-                <span>AUTOFLOW_STABLE_V1</span>
-              </div>
-
-              {/* Logger Screen */}
-              <div className="p-4 bg-[#030604] font-mono text-[11px] flex-grow overflow-y-auto space-y-2.5 max-h-[320px] scrollbar text-left">
-                {sandboxLogs.length === 0 ? (
-                  <div className="text-gray-600 italic">
-                    // Awaiting submission. Submit the ticket to inspect internal agent workflow steps, database similarity search operations, and final prompt context layouts.
-                  </div>
-                ) : (
-                  sandboxLogs.map((log, i) => (
-                    <div key={i} className="flex gap-2">
-                      <span className="text-gray-500">[{log.time}]</span>
-                      <span className={log.msg.includes('Step') ? 'text-cyan-400 font-semibold' : 'text-gray-300'}>
-                        {log.msg}
-                      </span>
-                    </div>
-                  ))
-                )}
-
-                {/* Simulated database retrieval layout */}
-                {sandboxResult && (
-                  <div className="mt-4 pt-4 border-t border-blue-500/10 space-y-4">
-
-                    {/* Retrieved SOPs */}
-                    <div>
-                      <div className="text-blue-400 text-xs font-bold mb-1">// RETRIEVED_SOP_METADATA:</div>
-                      {sandboxResult.retrieved_sops?.length > 0 ? (
-                        sandboxResult.retrieved_sops.map((sop, i) => (
-                          <div key={i} className="bg-blue-950/20 border border-blue-500/30 rounded p-2 text-white">
-                            <span className="text-cyan-400 font-bold">TITLE:</span> {sop.title} <br />
-                            <span className="text-cyan-400 font-bold">DEPARTMENT:</span> {sop.department} <br />
-                            <span className="text-cyan-400 font-bold">FILE_URL:</span> <a href={sop.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline break-all">{sop.file_url}</a>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-yellow-500 italic p-1 bg-yellow-950/20 border border-yellow-500/30 rounded">
-                          No matching SOP documents found in database. Escalation recommended.
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Similarity Chunks */}
-                    <div>
-                      <div className="text-blue-400 text-xs font-bold mb-1">// RETRIEVED_KNOWLEDGE_CHUNKS:</div>
-                      {sandboxResult.retrieved_chunks?.length > 0 ? (
-                        sandboxResult.retrieved_chunks.map((chunk, i) => (
-                          <div key={i} className="bg-black/60 border border-gray-800 rounded p-2 text-gray-300 relative">
-                            <div className="absolute top-2 right-2 text-[10px] text-cyan-400 bg-blue-500/10 px-1 border border-blue-500/20">
-                              Sim: {chunk.similarity?.toFixed(3)}
-                            </div>
-                            <span className="text-gray-500 font-bold">TEXT:</span> "{chunk.chunk_text}"
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-gray-500 italic">None.</div>
-                      )}
-                    </div>
-
-                    {/* AI Response Output */}
-                    <div>
-                      <div className="text-blue-400 text-xs font-bold mb-1">// GENERATED_RESOLUTION_OUTPUT:</div>
-                      <div className="bg-blue-950/10 border border-blue-500/20 rounded p-3 text-white leading-relaxed text-xs">
-                        {sandboxResult.ai_response || sandboxResult.ticket?.ai_response}
-                      </div>
-                    </div>
-
-                    {/* Final state summary */}
-                    <div className="flex items-center gap-2 p-2 bg-blue-500/10 rounded text-cyan-400 border border-blue-500/30 font-bold text-xs">
-                      <CheckCircle className="w-4 h-4" />
-                      <span>Pipeline execution completed in 3.1s. Database entry updated.</span>
-                    </div>
-
-                  </div>
-                )}
-              </div>
-
-              {/* Terminal Footer */}
-              <div className="bg-gray-950 px-4 py-2 border-t border-blue-500/10 text-right text-[10px] text-gray-500">
-                DB_CONNECTION: ONLINE (SUPABASE_RPC)
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
 
 
       {/* INTEGRATIONS SECTION */}
@@ -1045,10 +951,11 @@ If issues persist, please contact the local network administrator.`
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="text-xs font-mono tracking-widest text-blue-500 uppercase border border-blue-500/20 bg-blue-500/5 px-3 py-1 rounded">Platform Highlights & Reliability Infrastructure</span>
             <h2 className="text-3xl md:text-5xl font-bold text-white mt-4 tracking-tight">
-              Connect to your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 text-glow-blue">helpdesk tools.</span>
+              AI Platform <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 text-glow-blue">Features.</span>
             </h2>
             <p className="text-gray-400 mt-4 text-sm md:text-base">
-              Synchronize tickets and workflows seamlessly across standard operational tools.
+              Everything you need to build, automate, and scale intelligent workflows.
+              {/* Synchronize tickets and workflows seamlessly across standard operational tools. */}
             </p>
           </div>
 
@@ -1119,16 +1026,16 @@ If issues persist, please contact the local network administrator.`
       </section>
 
       {/* TECH STACK SECTION */}
-      <section className="py-20 md:py-28 border-t border-blue-500/10 bg-[#000000]">
+      <section id="techstack" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#000000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
-          <span className="text-xs font-mono tracking-widest text-cyan-400 uppercase border border-blue-500/20 bg-blue-500/5 px-3 py-1 rounded">Our Technology Stack</span>
+          <span className="text-xs font-mono tracking-widest text-cyan-400 uppercase border border-blue-500/20 bg-blue-500/5 px-3 py-1 rounded">Technology Stack</span>
           <h2 className="text-2xl md:text-4xl font-bold text-white mt-4 mb-12 tracking-tight">
             Built using modern, <span className="text-cyan-400">production-grade infrastructure.</span>
           </h2>
 
           <div className="flex flex-wrap items-center justify-center gap-4 max-w-4xl mx-auto">
-            {['React', 'Tailwind CSS', 'FastAPI', 'Supabase', 'PostgreSQL', 'LangGraph', 'Gemini AI'].map((tech) => (
+            {['React', 'Tailwind CSS', 'FastAPI', 'Supabase', 'PostgreSQL', 'Gemini AI'].map((tech) => (
               <div
                 key={tech}
                 className="px-5 py-3 border border-blue-500/10 rounded-lg bg-black hover:border-blue-500/30 transition-colors font-mono text-xs md:text-sm text-white flex items-center gap-2 group cursor-default"
@@ -1142,97 +1049,12 @@ If issues persist, please contact the local network administrator.`
         </div>
       </section>
 
-      {/* CALL TO ACTION SECTION */}
-      <section id="cta" className="py-24 md:py-32 relative border-t border-blue-500/10 bg-[#020503] overflow-hidden">
 
-        {/* Background glow overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.06),transparent_50%)]"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-
-          <h2 className="text-4xl md:text-6xl font-black uppercase text-white tracking-tight mb-4">
-            Manual triage was never the goal.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 text-glow-blue-strong">Automation was.</span>
-          </h2>
-
-          <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
-            Understand the workflow. Build integrations deliberately. Deploy AI agents to handle 94%+ of your tickets completely autonomously.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="mailto:contact@autoflow.ai"
-              className="w-full sm:w-auto text-center font-bold bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-500 hover:to-cyan-400 px-8 py-3.5 rounded transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2"
-            >
-              <span>Request Demo</span>
-              <ArrowRight className="w-5 h-5" />
-            </a>
-            <a
-              href="mailto:support@autoflow.ai"
-              className="w-full sm:w-auto text-center font-semibold text-cyan-400 border border-blue-500/30 hover:border-blue-500 bg-blue-500/5 hover:bg-blue-500/10 px-8 py-3.5 rounded transition-all duration-300"
-            >
-              Contact Us
-            </a>
-          </div>
-
-        </div>
-      </section>
 
       {/* FOOTER SECTION */}
-      <footer className="border-t border-blue-500/10 bg-[#000000] py-16 text-gray-500 text-xs relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-12">
-
-          {/* Brand Info */}
-          <div className="md:col-span-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-500/10 border border-blue-500/30 rounded flex items-center justify-center">
-                <GitBranch className="w-3.5 h-3.5 text-blue-400" />
-              </div>
-              <span className="text-white font-bold font-sans text-sm">
-                AutoFlow<span className="text-blue-400 font-mono font-medium ml-0.5">AI</span>
-              </span>
-            </div>
-            <p className="max-w-sm text-gray-500 leading-relaxed text-[11px]">
-              Triage is a collective bottleneck. We solve it through direct-to-database SOP integrations, sliced embeddings similarity math, and multi-agent LangGraph workflow execution.
-            </p>
-
-            {/* Social Icons links */}
-            <div className="flex items-center gap-3 pt-2 text-gray-400">
-              <a href="https://github.com/Rajeshbabu21" target="_blank" rel="noreferrer" aria-label="GitHub" className="p-2 border border-blue-500/5 hover:border-blue-500/30 rounded bg-black/20 text-gray-400 hover:text-cyan-400 transition-colors">
-                <ExternalLink className="w-4 h-4" />
-              </a>
-              <a href="mailto:support@autoflow.ai" aria-label="Email" className="p-2 border border-blue-500/5 hover:border-blue-500/30 rounded bg-black/20 text-gray-400 hover:text-cyan-400 transition-colors">
-                <Mail className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* Links 1 */}
-          <div className="md:col-span-3 space-y-3">
-            <span className="font-mono text-[10px] tracking-wider text-cyan-400/70 uppercase">INTEGRATIONS</span>
-            <ul className="space-y-2 text-[11px]">
-              <li><a href="#integrations" className="hover:text-cyan-400 transition-colors">Jira Connect</a></li>
-              <li><a href="#integrations" className="hover:text-cyan-400 transition-colors">Slack Bot</a></li>
-              <li><a href="#integrations" className="hover:text-cyan-400 transition-colors">Supabase DB Client</a></li>
-              <li><a href="#integrations" className="hover:text-cyan-400 transition-colors">Gemini API Integrator</a></li>
-            </ul>
-          </div>
-
-          {/* Links 2 */}
-          <div className="md:col-span-3 space-y-3">
-            <span className="font-mono text-[10px] tracking-wider text-cyan-400/70 uppercase">DOCUMENTATION</span>
-            <ul className="space-y-2 text-[11px]">
-              <li><a href="#workflow" className="hover:text-cyan-400 transition-colors">System Architecture</a></li>
-              <li><a href="#features" className="hover:text-cyan-400 transition-colors">384-Dim Embeddings RAG</a></li>
-              <li><a href="#agents" className="hover:text-cyan-400 transition-colors">LangGraph Agents</a></li>
-              <li><a href="#sandbox" className="hover:text-cyan-400 transition-colors">Sandbox Demo APIs</a></li>
-            </ul>
-          </div>
-
-        </div>
-
-        {/* Copyright and custom slogan */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-blue-500/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="border-t border-blue-500/10 bg-[#000000] py-8 text-gray-500 text-xs relative">
+        {/*  Copyright and custom slogan */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="font-mono text-[10px]">
             © {new Date().getFullYear()} AutoFlow AI · All Rights Reserved
           </div>

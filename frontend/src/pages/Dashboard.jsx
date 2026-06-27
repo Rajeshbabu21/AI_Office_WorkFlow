@@ -632,31 +632,28 @@ function Dashboard() {
                       <div className="flex gap-2 border-b border-blue-500/10 pb-3 mt-4">
                         <button
                           onClick={() => setTicketFilter('all')}
-                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
-                            ticketFilter === 'all'
-                              ? 'bg-blue-500/15 border border-blue-400 text-cyan-400'
-                              : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
-                          }`}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${ticketFilter === 'all'
+                            ? 'bg-blue-500/15 border border-blue-400 text-cyan-400'
+                            : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
+                            }`}
                         >
                           All ({tickets.length})
                         </button>
                         <button
                           onClick={() => setTicketFilter('assigned')}
-                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
-                            ticketFilter === 'assigned'
-                              ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300'
-                              : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
-                          }`}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${ticketFilter === 'assigned'
+                            ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300'
+                            : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
+                            }`}
                         >
                           Assigned ({tickets.filter(t => t.status?.toLowerCase() === 'assigned').length})
                         </button>
                         <button
                           onClick={() => setTicketFilter('resolved')}
-                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
-                            ticketFilter === 'resolved'
-                              ? 'bg-green-500/15 border border-green-400 text-green-400'
-                              : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
-                          }`}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${ticketFilter === 'resolved'
+                            ? 'bg-green-500/15 border border-green-400 text-green-400'
+                            : 'border border-blue-500/10 hover:border-blue-500/30 text-gray-500 hover:text-gray-300'
+                            }`}
                         >
                           Resolved ({tickets.filter(t => t.status?.toLowerCase() === 'resolved').length})
                         </button>
@@ -672,8 +669,10 @@ function Dashboard() {
                           {filteredTickets.map(t => (
                             <div
                               key={t.id}
-                              onClick={() => fetchTicketDetail(t.id)}
-                              className="p-5 border border-blue-500/10 bg-[#030604]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left"
+                              // onClick={() => fetchTicketDetail(t.id)}
+                              className="p-5 border border-blue-500/10 bg-[#030604]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all  flex flex-col justify-between relative group text-left"
+
+                            // className="p-5 border border-blue-500/10 bg-[#030604]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left"
                             >
                               <div>
                                 <div className="flex items-center justify-between mb-3 font-mono text-[10px]">
