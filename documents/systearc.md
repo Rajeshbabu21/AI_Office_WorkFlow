@@ -1,6 +1,6 @@
 # System Architecture - AutoFlow AI Console
 
-This document outlines the system architecture, component layout, database structures, and workflow pipelines for the AutoFlow AI support platform.
+This md file  outlines the system architecture for the AutoFlow AI support platform.
 
 ---
 
@@ -62,25 +62,6 @@ graph TD
     AUTH -->|User Credentials & Profile| PG
 ```
 
----
-
-## 2. Key Component Details
-
-### A. Frontend Layer (React + Vite)
-- **Home Component (`Home.jsx`)**: The landing page displaying interactive visualizers of RAG flows, system telemetry, and a static technology stack section highlighting React, Tailwind CSS, FastAPI, Supabase, PostgreSQL, and Gemini AI.
-- **Dashboard Component (`Dashboard.jsx`)**: An administration panel providing a real-time console where users can submit tickets, chat with the AI auto-resolver, write messages/comments, view the system state audit trail, and escalations.
-- **API Axios Client (`api/axios.jsx`)**: Centrally handles authorization headers containing the user's JWT bearer tokens.
-
-### B. Backend App Server (FastAPI)
-- **FastAPI Core (`app/app.py`)**: Runs on Uvicorn hosting REST endpoints. Handles route protection with JWT authentication dependencies.
-- **Auth Component (`auth/auth.py`)**: Validates user registration/logins, hashes passwords via `passlib`, and decodes incoming Bearer tokens.
-- **Ticket Module (`ticket/ticket.py`)**: Manages the ticket lifecycle (creation, updates, comment logging, database transactions, email notification triggers, and Jira backlog ticket synchronization).
-- **RAG & SOP Processor (`rag/sop_service.py`)**: Performs text extraction from PDF files uploaded to Supabase storage, chunks texts, creates embeddings, and stores them in the DB.
-
-### C. Database & Vector Store (Supabase PostgreSQL)
-- Runs relational tables for user tracking and logs, and supports Vector matching fields (`pgvector`) for vector-based semantic retrieval.
-
----
 
 ## 3. Database Schema Blueprint
 
