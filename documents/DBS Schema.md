@@ -124,16 +124,5 @@
 | `status` | `text` |  Nullable |
 | `error_message` | `text` |  Nullable |
 
-## Table `jira_tickets`
 
-### Columns
-
-| Name | Type | Constraints |
-|------|------|-------------|
-| `id` | `int4` | Primary |
-| `ticket_id` | `int4` |  |
-| `jira_issue_key` | `varchar` |  Nullable |
-| `jira_status` | `varchar` |  Nullable |
-| `created_at` | `timestamp` |  Nullable |
-| `jira_issue_id` | `varchar` |  Nullable |
 
