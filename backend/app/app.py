@@ -345,7 +345,7 @@ def get_ticket_detail(ticket_id: int, user: dict = Depends(current_user)):
         if ticket["user_id"] != user["id"] and user["role"] not in ["admin", "support", "agent", "Support", "Admin", "Agent"]:
             raise HTTPException(status_code=403, detail="Forbidden")
             
-        messages_res = supabase.table("ticket_messages").select("*").eq("ticket_id", ticket_id).order("created_at", asc=True).execute()
+        messages_res = supabase.table("ticket_messages").select("*").eq("ticket_id", ticket_id).order("created_at", desc=False).execute()
         history_res = supabase.table("ticket_history").select("*").eq("ticket_id", ticket_id).order("created_at", desc=True).execute()
         
         escalation_res = supabase.table("escalations").select("*").eq("ticket_id", ticket_id).order("escalated_at", desc=True).execute()
@@ -388,4 +388,38 @@ def add_ticket_message(ticket_id: int, message: str = Form(...), user: dict = De
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/userdashboard")
+def get_user_dashboard(user: dict = Depends(current_user)):
+    try:
+        # Fetch tickets of the current user
+        tickets_res = (
+            supabase
+            .table("tickets")
+            .select("id, status")
+            .eq("user_id", user["id"])
+            .execute()
+        )
+        tickets = tickets_res.data or []
+        
+        # Calculate counts
+        total_tickets = len(tickets)
+        solved_tickets = sum(1 for t in tickets if (t.get("status") or "").upper() == "RESOLVED")
+        escalated_tickets = sum(1 for t in tickets if (t.get("status") or "").upper() == "ESCALATED")
+        
+        return {
+            "full_name": user.get("full_name"),
+            "total_tickets": total_tickets,
+            "solved_tickets": solved_tickets,
+            "escalated_tickets": escalated_tickets
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/userddasboard")
+def get_user_dashboard_alias(user: dict = Depends(current_user)):
+    return get_user_dashboard(user)
+
 

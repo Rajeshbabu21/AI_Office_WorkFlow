@@ -25,8 +25,10 @@ function Dashboard() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Chat modes: 'chat' (new query mode) or 'view' (selected ticket mode)
-  const [mode, setMode] = useState('chat');
+  // Chat modes: 'dashboard', 'chat' (new query mode), 'history' (list tickets), or 'view' (selected ticket mode)
+  const [mode, setMode] = useState('dashboard');
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
   // New chat query input state
   const [chatTitle, setChatTitle] = useState('');
@@ -75,6 +77,19 @@ function Dashboard() {
     }
   }, [token]);
 
+  // Fetch dashboard stats
+  const fetchDashboardData = async (silent = false) => {
+    if (!silent) setDashboardLoading(true);
+    try {
+      const response = await api.get('/userdashboard');
+      setDashboardData(response.data || null);
+    } catch (err) {
+      console.error('Failed to fetch dashboard statistics', err);
+    } finally {
+      if (!silent) setDashboardLoading(false);
+    }
+  };
+
   // Fetch all tickets created by the user
   const fetchTickets = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -92,6 +107,7 @@ function Dashboard() {
 
   useEffect(() => {
     if (token) {
+      fetchDashboardData();
       fetchTickets();
     }
   }, [token]);
@@ -273,6 +289,7 @@ function Dashboard() {
 
         // Refresh sidebar queue list
         await fetchTickets(true);
+        await fetchDashboardData(true);
       }, 2400);
 
     } catch (err) {
@@ -302,6 +319,7 @@ function Dashboard() {
       setShowEscalateModal(false);
       await fetchTicketDetail(selectedTicketId);
       await fetchTickets(true);
+      await fetchDashboardData(true);
     } catch (err) {
       console.error(err);
       alert('Failed to escalate ticket to Jira backlog.');
@@ -388,18 +406,30 @@ function Dashboard() {
           </div>
 
           <div className="flex items-center gap-4">
-            {user && (
-              <div className="hidden md:flex items-center gap-2 font-mono text-xs text-gray-400 border border-blue-500/15 px-3 rounded-lg bg-black/45 h-10">
-                <User className="w-3.5 h-3.5 text-cyan-400" />
-                <span>USER: {user.email}</span>
-              </div>
-            )}
+
+            <button
+              onClick={() => {
+                fetchDashboardData();
+                setMode('dashboard');
+              }}
+              className={`flex items-center justify-center gap-2 text-sm font-semibold px-4 rounded-lg transition-all cursor-pointer h-10 font-mono ${mode === 'dashboard'
+                ? 'border border-cyan-500 bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
+                : 'border border-blue-500/25 bg-blue-500/5 hover:bg-blue-500/10 text-cyan-400'
+                }`}
+              title="View Dashboard Overview"
+            >
+              <Activity className="w-4 h-4" />
+              <span>DASHBOARD</span>
+            </button>
             <button
               onClick={() => {
                 fetchTickets();
                 setMode('history');
               }}
-              className="flex items-center justify-center gap-2 text-sm font-semibold border border-blue-500/25 bg-blue-500/5 hover:bg-blue-500/10 text-cyan-400 px-4 rounded-lg transition-all cursor-pointer h-10 font-mono"
+              className={`flex items-center justify-center gap-2 text-sm font-semibold px-4 rounded-lg transition-all cursor-pointer h-10 font-mono ${mode === 'history'
+                ? 'border border-cyan-500 bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
+                : 'border border-blue-500/25 bg-blue-500/5 hover:bg-blue-500/10 text-cyan-400'
+                }`}
               title="View Ticket History"
             >
               <FileText className="w-4 h-4" />
@@ -456,29 +486,7 @@ function Dashboard() {
                 </div>
               </div>
 
-              {/* Grid Metadata */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[11px] font-mono border-t border-blue-500/5 pt-3">
-                <div>
-                  <span className="text-gray-500 block">DEPARTMENT:</span>
-                  <span className="text-white font-bold block mt-0.5">{ticketDetail.ticket.department || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500 block">CATEGORY:</span>
-                  <span className="text-white font-bold block mt-0.5">{ticketDetail.ticket.category || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500 block">PRIORITY:</span>
-                  <span className={`font-bold block mt-0.5 ${getPriorityBadgeStyle(ticketDetail.ticket.priority)}`}>
-                    {ticketDetail.ticket.priority || 'Medium'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500 block">ASSIGNED TO:</span>
-                  <span className="text-cyan-400 font-bold block mt-0.5">
-                    {assigneeInfo?.agent_name ? assigneeInfo.agent_name : 'AI Agent'}
-                  </span>
-                </div>
-              </div>
+
 
               {/* Collapsible details preview */}
               <div className="bg-[#030604]/60 border border-blue-500/10 rounded-lg p-2.5 mt-1 text-xs">
@@ -495,64 +503,9 @@ function Dashboard() {
             {mode === 'view' && ticketDetail ? (
               <div className="space-y-4">
 
-                {/* AI Draft Response Card */}
-                {ticketDetail.ticket.ai_response && (
-                  <div className="border border-blue-500/20 bg-blue-500/5 rounded-2xl p-4 overflow-hidden relative text-left">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl"></div>
-                    <div className="flex items-center gap-1.5 text-cyan-400 font-bold font-mono text-xs border-b border-blue-500/10 pb-2 mb-2">
-                      <Cpu className="w-4 h-4 animate-pulse" />
-                      <span>Gemini Auto-Resolution System Reply:</span>
-                    </div>
-                    <p className="text-white text-xs leading-relaxed font-sans whitespace-pre-wrap">
-                      {ticketDetail.ticket.ai_response}
-                    </p>
-                  </div>
-                )}
 
-                {/* Connected Jira Details Area */}
-                {ticketDetail.jira_ticket && (
-                  <div className="border border-purple-500/25 bg-purple-500/5 rounded-2xl p-4 text-left">
-                    <div className="flex items-center gap-1.5 text-purple-400 font-bold font-mono text-xs border-b border-purple-500/10 pb-2 mb-3">
-                      <GitBranch className="w-4 h-4" />
-                      <span>Connected Jira Cloud Integration:</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 font-mono text-[10px] mb-3">
-                      <div className="bg-black/40 border border-purple-500/10 p-2 rounded">
-                        <span className="text-gray-500">JIRA KEY</span>
-                        <span className="text-white font-bold block mt-0.5 text-xs">{ticketDetail.jira_ticket.jira_issue_key}</span>
-                      </div>
-                      <div className="bg-black/40 border border-purple-500/10 p-2 rounded">
-                        <span className="text-gray-500">JIRA ID</span>
-                        <span className="text-white block mt-0.5">{ticketDetail.jira_ticket.jira_issue_id}</span>
-                      </div>
-                      <div className="bg-black/40 border border-purple-500/10 p-2 rounded">
-                        <span className="text-gray-500">STATUS</span>
-                        <span className="text-green-400 font-bold block mt-0.5 uppercase">{ticketDetail.jira_ticket.jira_status}</span>
-                      </div>
-                    </div>
-                    {ticketDetail.escalation && (
-                      <div className="bg-black/50 border border-purple-500/10 p-3 rounded text-xs font-mono">
-                        <span className="text-purple-400 font-bold block mb-1">ESCALATION AUDIT NOTES:</span>
-                        <span className="text-gray-300 font-sans leading-relaxed block">{ticketDetail.escalation.reason}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {/* Audit execution log list */}
-                {ticketDetail.history && ticketDetail.history.length > 0 && (
-                  <div className="text-left font-mono text-[10px]">
-                    <span className="text-gray-500 font-bold block mb-1">// System state audit trail:</span>
-                    <div className="bg-[#030604] border border-blue-500/10 p-3 rounded-lg space-y-1 text-gray-400 max-h-[120px] overflow-y-auto scrollbar">
-                      {ticketDetail.history.map((h, idx) => (
-                        <div key={idx} className="flex gap-2">
-                          <span className="text-gray-600">[{new Date(h.created_at).toLocaleTimeString()}]</span>
-                          <span className="text-cyan-400 font-semibold">{h.action}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Conversational message logs */}
                 <div className="space-y-4 pt-4 border-t border-blue-500/5">
@@ -580,6 +533,164 @@ function Dashboard() {
                   )}
                 </div>
 
+              </div>
+            ) : mode === 'dashboard' ? (
+
+              // 4. DASHBOARD MODE: SHOW STATS & QUICK ACTIONS
+              <div className="space-y-6 text-left">
+                {/* Welcome Card / Banner */}
+                <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-blue-950/20 to-cyan-950/10 p-6 md:p-8">
+                  <div className="absolute -right-20 -top-20 w-60 h-60 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <span className="font-mono text-[10px] text-cyan-400 tracking-widest uppercase block mb-1">SUPPORT CONSOLE STATUS</span>
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                        Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-400">{dashboardData?.full_name || user?.email || 'User'}</span>!
+                      </h2>
+                      <p className="text-gray-400 text-xs md:text-sm mt-1.5 max-w-xl leading-relaxed">
+                        Monitor your support requests, track AI auto-resolution feedback, and manage escalated engineering tasks from this console.
+                      </p>
+                    </div>
+                    <div className="flex gap-2.5 shrink-0">
+                      <button
+                        onClick={startNewChat}
+                        className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all shadow-[0_0_12px_rgba(59,130,246,0.3)] cursor-pointer h-10 font-mono"
+                      >
+                        <Zap className="w-4 h-4 text-yellow-300 animate-pulse" />
+                        <span>SUBMIT NEW QUERY</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Loading State or Metrics Grid */}
+                {dashboardLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-gray-500 text-xs gap-3">
+                    <div className="w-8 h-8 border-3 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin"></div>
+                    <span className="font-mono">Syncing console data...</span>
+                  </div>
+                ) : (
+                  <>
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Metric 1: Total Created */}
+                      <div className="p-5 border border-blue-500/15 bg-blue-950/5 hover:border-blue-500/30 rounded-2xl transition-all relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block">Tickets Created</span>
+                            <span className="text-3xl font-extrabold text-white mt-1 block">
+                              {dashboardData?.total_tickets ?? 0}
+                            </span>
+                          </div>
+                          <div className="w-9 h-9 bg-blue-500/10 border border-blue-500/25 rounded-lg flex items-center justify-center text-cyan-400">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-mono">
+                          Total tickets submitted to the helpdesk system.
+                        </p>
+                      </div>
+
+                      {/* Metric 2: Solved Issues */}
+                      <div className="p-5 border border-green-500/15 bg-green-950/5 hover:border-green-500/30 rounded-2xl transition-all relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-xl pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <span className="text-[10px] font-mono text-green-400 uppercase tracking-wider block">Issues Solved</span>
+                            <span className="text-3xl font-extrabold text-white mt-1 block">
+                              {dashboardData?.solved_tickets ?? 0}
+                            </span>
+                          </div>
+                          <div className="w-9 h-9 bg-green-500/10 border border-green-500/25 rounded-lg flex items-center justify-center text-green-400">
+                            <CheckCircle className="w-5 h-5" />
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-mono">
+                          Tickets resolved through SOP match or support agent intervention.
+                        </p>
+                      </div>
+
+                      {/* Metric 3: Escalated Issues */}
+                      <div className="p-5 border border-purple-500/15 bg-purple-950/5 hover:border-purple-500/30 rounded-2xl transition-all relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-xl pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <span className="text-[10px] font-mono text-purple-400 uppercase tracking-wider block">Escalated Tickets</span>
+                            <span className="text-3xl font-extrabold text-white mt-1 block">
+                              {dashboardData?.escalated_tickets ?? 0}
+                            </span>
+                          </div>
+                          <div className="w-9 h-9 bg-purple-500/10 border border-purple-500/25 rounded-lg flex items-center justify-center text-purple-400">
+                            <AlertCircle className="w-5 h-5" />
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-mono">
+                          Cases pushed to Jira Cloud backlog for engineering backlog assignment.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quick Access/Recent activity preview */}
+                    <div className="border border-blue-500/10 rounded-2xl bg-black/40 p-5 mt-6">
+                      <div className="flex justify-between items-center border-b border-blue-500/5 pb-3.5 mb-4">
+                        <div>
+                          <span className="font-mono text-[10px] text-cyan-400 block mb-0.5">// MONITORING QUEUE</span>
+                          <h3 className="text-sm font-bold text-white tracking-tight">Recent Support Tickets</h3>
+                        </div>
+                        <button
+                          onClick={() => {
+                            fetchTickets();
+                            setMode('history');
+                          }}
+                          className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>VIEW ARCHIVE</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {tickets.length === 0 ? (
+                        <div className="py-6 text-center text-gray-500 text-xs font-mono">
+                          No tickets created yet. Submit a query to start monitoring.
+                        </div>
+                      ) : (
+                        <div className="space-y-3.5 max-h-[220px] overflow-y-auto scrollbar pr-1">
+                          {tickets.slice(0, 3).map((t, index) => (
+                            <div
+                              key={t.id}
+                              onClick={() => fetchTicketDetail(t.id)}
+                              className={`p-3.5 border border-blue-500/5 hover:border-blue-500/20 hover:bg-blue-500/5 rounded-xl transition-all cursor-pointer flex justify-between items-center text-left ${
+                                index % 2 === 0 ? 'bg-[#030604]/40' : 'bg-[#0c120e]/40'
+                              }`}
+                            >
+                              <div className="flex flex-col gap-1 min-w-0 flex-1 pr-4">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-mono text-[9px] text-cyan-500">#{t.id}</span>
+                                  <h4 className="text-white font-bold text-xs truncate max-w-[280px]">
+                                    {t.title}
+                                  </h4>
+                                  <span className="text-[10px] text-gray-500 font-mono">({t.category || 'General'})</span>
+                                </div>
+                                <p className="text-gray-400 text-[11px] truncate leading-relaxed">
+                                  {t.description}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className={`px-2 py-0.5 rounded border font-mono text-[9px] uppercase tracking-wider ${getStatusBadgeStyle(t.status)}`}>
+                                  {getMappedStatusLabel(t.status)}
+                                </span>
+                                <span className="text-[10px] text-gray-500 font-mono">
+                                  {new Date(t.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             ) : mode === 'history' ? (
 
@@ -666,13 +777,13 @@ function Dashboard() {
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[380px] overflow-y-auto scrollbar pr-1 mt-4">
-                          {filteredTickets.map(t => (
+                          {filteredTickets.map((t, index) => (
                             <div
                               key={t.id}
-                              // onClick={() => fetchTicketDetail(t.id)}
-                              className="p-5 border border-blue-500/10 bg-[#030604]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all  flex flex-col justify-between relative group text-left"
-
-                            // className="p-5 border border-blue-500/10 bg-[#030604]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left"
+                              onClick={() => fetchTicketDetail(t.id)}
+                              className={`p-5 border border-blue-500/10 bg-[#030604]/60 hover:bg-blue-500/5 hover:border-blue-500/25 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative group text-left ${
+                                index % 2 === 0 ? 'bg-[#030604]/60' : 'bg-[#0c120e]/60'
+                              }`}
                             >
                               <div>
                                 <div className="flex items-center justify-between mb-3 font-mono text-[10px]">
@@ -829,33 +940,13 @@ function Dashboard() {
           </div>
 
           {/* LOWER MESSAGE FORM */}
-          {mode !== 'history' && (
+          {(mode === 'chat' || mode === 'view') && (
             <div className="p-4 border-t border-blue-500/10 bg-gray-950/40 shrink-0">
 
               {mode === 'view' ? (
 
-                // A. REPLY INPUT FOR CHAT HISTORY
                 <form onSubmit={handleSendReply} className="flex gap-2 text-left">
-                  <input
-                    type="text"
-                    value={replyMessage}
-                    onChange={(e) => setReplyMessage(e.target.value)}
-                    placeholder="Type a follow-up message to this support ticket..."
-                    className="flex-grow bg-black border border-blue-500/20 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400 transition-colors placeholder:text-gray-600"
-                    disabled={replySubmitting}
-                    required
-                  />
-                  <button
-                    type="submit"
-                    disabled={replySubmitting || !replyMessage.trim()}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold px-4 rounded-lg flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    {replySubmitting ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    ) : (
-                      <Send className="w-4.5 h-4.5" />
-                    )}
-                  </button>
+
                 </form>
 
               ) : (
@@ -907,75 +998,7 @@ function Dashboard() {
 
       </div>
 
-      {/* MANUAL JIRA ESCALATION MODAL */}
-      {showEscalateModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-[#050a06] border border-purple-500/20 rounded-2xl overflow-hidden shadow-2xl relative glow-box-purple text-left">
 
-            <div className="p-5 border-b border-purple-500/15 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <ArrowUpRight className="w-4 h-4 text-purple-400 animate-pulse" />
-                <span>Manual Escalation to Jira</span>
-              </h3>
-              <button
-                onClick={() => { if (!escalating) setShowEscalateModal(false); }}
-                className="text-gray-400 hover:text-white transition-colors"
-                disabled={escalating}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div className="bg-purple-950/10 border border-purple-500/10 rounded-lg p-3 text-xs text-purple-300 leading-relaxed font-mono">
-                ⚠️ Proceeding will generate an issue on the corporate Jira backlog and log the escalation state in the escalations database table.
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-mono uppercase text-gray-400">Escalation Reason Notes</label>
-                <textarea
-                  value={escalationReason}
-                  onChange={(e) => setEscalationReason(e.target.value)}
-                  rows={3}
-                  className="bg-black border border-purple-500/20 focus:border-purple-400 rounded-lg p-3 text-xs text-white focus:outline-none transition-colors resize-none"
-                  required
-                  disabled={escalating}
-                />
-              </div>
-            </div>
-
-            <div className="p-5 border-t border-purple-500/15 bg-gray-950/40 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowEscalateModal(false)}
-                className="px-4 py-2 border border-gray-800 text-gray-400 rounded-lg text-xs font-semibold hover:text-white hover:border-gray-700 transition-all cursor-pointer"
-                disabled={escalating}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleEscalateTicket}
-                disabled={escalating || !escalationReason.trim()}
-                className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs px-5 py-2.5 rounded-lg transition-all shadow-[0_0_15px_rgba(168,85,247,0.3)] flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                {escalating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Escalating...</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowUpRight className="w-4 h-4" />
-                    <span>Escalate Ticket</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );

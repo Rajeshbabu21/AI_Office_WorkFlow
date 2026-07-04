@@ -499,13 +499,13 @@ If issues persist, please contact the local network administrator.`
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             {token ? (
-              <a
-                href="#sandbox"
+              <Link
+                to="/dashboard"
                 className="w-full sm:w-auto text-center font-bold bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-500 hover:to-cyan-400 px-8 py-3.5 rounded transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2 group"
               >
                 <span>Console Active</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
             ) : (
               <Link
                 to="/login"
@@ -606,7 +606,7 @@ If issues persist, please contact the local network administrator.`
       </section> */}
 
       {/* CORE WORKFLOW SECTION */}
-      <section id="workflow" className="py-20 md:py-28 relative">
+      <section id="workflow" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#000000] relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16">
@@ -852,7 +852,7 @@ If issues persist, please contact the local network administrator.`
       </section> */}
 
       {/* AI AGENTS SECTION */}
-      <section id="agents" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#000000]">
+      <section id="agents" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#020503]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16">
@@ -945,7 +945,7 @@ If issues persist, please contact the local network administrator.`
 
 
       {/* INTEGRATIONS SECTION */}
-      <section id="integrations" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#020503] relative">
+      <section id="integrations" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#000000] relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -1026,7 +1026,7 @@ If issues persist, please contact the local network administrator.`
       </section>
 
       {/* TECH STACK SECTION */}
-      <section id="techstack" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#000000]">
+      <section id="techstack" className="py-20 md:py-28 border-t border-blue-500/10 bg-[#020503]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
           <span className="text-xs font-mono tracking-widest text-cyan-400 uppercase border border-blue-500/20 bg-blue-500/5 px-3 py-1 rounded">Technology Stack</span>
@@ -1035,13 +1035,69 @@ If issues persist, please contact the local network administrator.`
           </h2>
 
           <div className="flex flex-wrap items-center justify-center gap-4 max-w-4xl mx-auto">
-            {['React', 'Tailwind CSS', 'FastAPI', 'Supabase', 'PostgreSQL', 'Gemini AI'].map((tech) => (
+            {[
+              {
+                name: 'React',
+                icon: (
+                  <svg className="w-5 h-5 text-[#61DAFB] transition-transform duration-1000 group-hover:rotate-[360deg]" viewBox="-11.5 -10.23174 23 20.46348" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="0" cy="0" r="2.05" fill="currentColor" />
+                    <g stroke="currentColor" strokeWidth="1">
+                      <ellipse rx="11" ry="4.2" />
+                      <ellipse rx="11" ry="4.2" transform="rotate(60)" />
+                      <ellipse rx="11" ry="4.2" transform="rotate(120)" />
+                    </g>
+                  </svg>
+                )
+              },
+              {
+                name: 'Tailwind CSS',
+                icon: (
+                  <svg className="w-5 h-5 text-[#38bdf8] transition-transform duration-500 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.337 6.182 14.976 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C7.666 17.818 9.027 19 12.001 19c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.337 13.382 8.976 12 6.001 12z" />
+                  </svg>
+                )
+              },
+              {
+                name: 'FastAPI',
+                icon: (
+                  <svg className="w-5 h-5 text-[#009688] transition-transform duration-500 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-1.563 17.5v-4.688H7.938l5.625-7.812v4.688h2.5L10.437 17.5z" />
+                  </svg>
+                )
+              },
+              {
+                name: 'Supabase',
+                icon: (
+                  <svg className="w-5 h-5 text-[#3ecf8e] transition-transform duration-500 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.75 2.25L3.75 12.75h7.5v9L20.25 11.25h-7.5v-9z" />
+                  </svg>
+                )
+              },
+              {
+                name: 'PostgreSQL',
+                icon: (
+                  <svg className="w-5 h-5 text-[#336791] transition-transform duration-500 group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="12" cy="5" rx="9" ry="3" fill="currentColor" fillOpacity="0.2" />
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                    <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+                  </svg>
+                )
+              },
+              {
+                name: 'Gemini AI',
+                icon: (
+                  <svg className="w-5 h-5 text-[#8AB4F8] transition-all duration-700 group-hover:rotate-180 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2a1 1 0 0 1 .993.883L13 3c0 4.97 4.03 9 9 9a1 1 0 0 1 .117 1.993l-.117.007c-4.97 0-9 4.03-9 9a1 1 0 0 1-1.993.117L11 22c0-4.97-4.03-9-9-9a1 1 0 0 1-.117-1.993L2 12c4.97 0 9-4.03 9-9a1 1 0 0 1 1-1z" />
+                  </svg>
+                )
+              }
+            ].map((tech) => (
               <div
-                key={tech}
-                className="px-5 py-3 border border-blue-500/10 rounded-lg bg-black hover:border-blue-500/30 transition-colors font-mono text-xs md:text-sm text-white flex items-center gap-2 group cursor-default"
+                key={tech.name}
+                className="px-5 py-3 border border-blue-500/10 rounded-lg bg-black hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 font-mono text-xs md:text-sm text-white flex items-center gap-3 group cursor-default"
               >
-                <div className="w-2 h-2 rounded-full bg-blue-500 group-hover:scale-125 transition-transform"></div>
-                <span>{tech}</span>
+                {tech.icon}
+                <span>{tech.name}</span>
               </div>
             ))}
           </div>
