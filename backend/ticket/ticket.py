@@ -1,7 +1,7 @@
 import os
 import logging
 from typing import Optional
-import google.generativeai as genai
+from rag.embeddings import get_embedding
 from fastapi import FastAPI, Depends, HTTPException, status
 from ticket.ticketschema import InsertTicket
 from database.db import supabase
@@ -277,23 +277,10 @@ def retrieve_relevant_chunks(category: str, title: str, description: str, limit:
         # STEP 2: Generating Query Embedding
         logger.info("STEP 2: Generating Query Embedding")
         
-        # Configure genai key
-        api_key = os.getenv("GEMINI_API_KEY")
-        if api_key:
-            genai.configure(api_key=api_key)
-        else:
-            logger.error("GEMINI_API_KEY not found in environment variables.")
-            
         query_text = f"Category: {category}\nTitle: {title}\nDescription: {description}"
         
-        # Generate embedding using Gemini's gemini-embedding-001 model
-        embed_res = genai.embed_content(
-            model="models/gemini-embedding-001",
-            content=query_text,
-            task_type="retrieval_query"
-        )
-        # Sliced to 384 dimensions to match target vector database size
-        query_embedding = embed_res["embedding"][:384]
+        # Generate embedding using local embedding service (dim=384)
+        query_embedding = get_embedding(query_text)
         
         # STEP 3: Vector Similarity Search
         logger.info("STEP 3: Vector Similarity Search")
@@ -390,9 +377,9 @@ def create_ticket(ticket: InsertTicket, user_id: int):
     retrieved_chunks_texts = []
 
     try:
-        # 3a. Gemini Classification
+        # 3a. Ollama Classification
         try:
-            logger.info("Starting Gemini classification...")
+            logger.info("Starting Ollama classification...")
             ai_result = classify_ticket(
                 title=ticket.title,
                 description=ticket.description
@@ -403,7 +390,7 @@ def create_ticket(ticket: InsertTicket, user_id: int):
             sentiment = ai_result.get("sentiment") or "Neutral"
             confidence = ai_result.get("confidence") or 0.8
         except Exception as class_err:
-            logger.error(f"Gemini classification failed for ticket ID {ticket_id}: {class_err}. Using fallbacks.")
+            logger.error(f"Ollama classification failed for ticket ID {ticket_id}: {class_err}. Using fallbacks.")
             category = "General"
             priority = "Medium"
             department = "Support"
@@ -537,8 +524,8 @@ def create_ticket(ticket: InsertTicket, user_id: int):
                 context_blocks.append(block)
             context = "\n\n".join(context_blocks) if context_blocks else "No relevant SOP chunks found."
             
-            # STEP 5: Sending Context to Gemini
-            logger.info("STEP 5: Sending Context to Gemini")
+            # STEP 5: Sending Context to Ollama
+            logger.info("STEP 5: Sending Context to Ollama")
             ai_response = generate_ticket_response(
                 category=category,
                 title=ticket.title,
@@ -547,12 +534,12 @@ def create_ticket(ticket: InsertTicket, user_id: int):
                 department=department,
                 retrieved_chunks=context
             )
-            # STEP 6: Gemini Response Generated
-            logger.info("STEP 6: Gemini Response Generated")
+            # STEP 6: Ollama Response Generated
+            logger.info("STEP 6: Ollama Response Generated")
             logger.info(f"AI Response:\n{ai_response}")
             
         except Exception as gen_err:
-            logger.error(f"Gemini answer generation failed for ticket ID {ticket_id}: {gen_err}")
+            logger.error(f"Ollama answer generation failed for ticket ID {ticket_id}: {gen_err}")
             raise gen_err
 
         # 3g. Insert AI response into ticket_messages (sender_id = user_id)

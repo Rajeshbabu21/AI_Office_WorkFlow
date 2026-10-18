@@ -1,0 +1,36 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Build and packaging
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Environment files
+*.env
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# PyTorch / ML caches and large files
+*.pt
+*.pth
+*.ckpt
+*.dll
+*.so
+*.dylib

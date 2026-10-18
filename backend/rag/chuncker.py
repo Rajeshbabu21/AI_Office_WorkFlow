@@ -1,7 +1,7 @@
 import os
 import logging
 from database.db import supabase
-import google.generativeai as genai
+from rag.embeddings import get_embeddings
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
@@ -24,36 +24,11 @@ def store_chunks(sop_id: int, chunks: list):
             logger.warning(f"No chunks provided to store for SOP ID: {sop_id}")
             return None
 
-        logger.info(f"Generating embeddings for {len(chunks)} chunks for SOP ID {sop_id}")
+        logger.info(f"Generating local embeddings for {len(chunks)} chunks for SOP ID {sop_id}")
         
-        # Configure genai key
-        api_key = os.getenv("GEMINI_API_KEY")
-        if api_key:
-            genai.configure(api_key=api_key)
-        else:
-            logger.error("GEMINI_API_KEY not found in environment variables.")
-            
-        # Try to generate embeddings in batch
-        try:
-            embed_res = genai.embed_content(
-                model="models/gemini-embedding-001",
-                content=chunks,
-                task_type="retrieval_document"
-            )
-            # Truncate each embedding vector to 384 dimensions
-            embeddings = [emb[:384] for emb in embed_res["embedding"]]
-            logger.info("Batch embedding generation successful")
-        except Exception as embed_err:
-            logger.warning(f"Batch embedding generation failed: {embed_err}. Falling back to sequential generation.")
-            embeddings = []
-            for chunk in chunks:
-                single_res = genai.embed_content(
-                    model="models/gemini-embedding-001",
-                    content=chunk,
-                    task_type="retrieval_document"
-                )
-                embeddings.append(single_res["embedding"][:384])
-            logger.info("Sequential embedding generation successful")
+        # Generate 384-dimensional embeddings using local embedding service
+        embeddings = get_embeddings(chunks)
+        logger.info(f"Successfully generated {len(embeddings)} local embeddings (dim=384)")
 
         logger.info(f"Storing {len(chunks)} chunks with embeddings for SOP ID {sop_id} in database")
         

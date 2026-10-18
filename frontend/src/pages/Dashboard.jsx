@@ -192,7 +192,7 @@ function Dashboard() {
     setChatLoading(true);
     setChatLogs([
       { step: 'Ingestion', msg: 'Ingesting ticket query stream...' },
-      { step: 'Analyze', msg: 'Running Gemini NLP classification...' }
+      { step: 'Analyze', msg: 'Running Ollama (llama3.2) NLP classification...' }
     ]);
 
     // Append user query to chat view
@@ -217,7 +217,7 @@ function Dashboard() {
     }, 800);
 
     setTimeout(() => {
-      setChatLogs(prev => [...prev, { step: 'LLM Synthesis', msg: 'Synthesizing Gemini context response...' }]);
+      setChatLogs(prev => [...prev, { step: 'LLM Synthesis', msg: 'Synthesizing Ollama (llama3.2) context response...' }]);
     }, 1600);
 
     try {

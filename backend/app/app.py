@@ -18,7 +18,7 @@ from datetime import timedelta
 
 from ticket.ticketschema import InsertTicket
 from ticket.ticket import create_ticket, escalate_ticket_by_id
-from ticket.ticketaiservice import classify_ticket
+from ticket.ticketaiservice import classify_ticket, check_ollama_status
 from rag.sop_service import process_sop_pdf
 from rag.SOPschema import SOPCreate
 
@@ -47,6 +47,12 @@ app.add_middleware(
 @app.get("/ping")
 def read_root():
     return {"ping": "pong"}
+
+
+@app.get("/ollama/status")
+def get_ollama_status():
+    """Returns connectivity and model status for the local Ollama instance."""
+    return check_ollama_status()
 
 
 @app.post("/register_users")

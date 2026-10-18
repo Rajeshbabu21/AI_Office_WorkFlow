@@ -11,12 +11,15 @@ import jwt
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
-
+from pathlib import Path
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 load_dotenv()
 
-SECRET_KEY = os.getenv("secret_key")
-ALGORITHM = os.getenv("algorithm")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("access_token_expire_minutes"))
+SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("secret_key") or "supersecretkey"
+ALGORITHM = os.getenv("ALGORITHM") or os.getenv("algorithm") or "HS256"
+_token_expire = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or os.getenv("access_token_expire_minutes") or "30"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(_token_expire)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user_login")

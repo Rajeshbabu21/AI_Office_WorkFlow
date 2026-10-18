@@ -253,7 +253,7 @@ function Home() {
     }, 1800);
 
     setTimeout(() => {
-      setSandboxLogs(prev => [...prev, { time: '2.5s', msg: '🤖 Step 5: Invoking Gemini AI model for context-aware resolution...' }]);
+      setSandboxLogs(prev => [...prev, { time: '2.5s', msg: '🤖 Step 5: Invoking Ollama (llama3.2) AI model for context-aware resolution...' }]);
     }, 2400);
 
     try {
@@ -564,7 +564,7 @@ If issues persist, please contact the local network administrator.`
               <div className="border border-blue-500/10 rounded p-4 bg-[#030604]">
                 <div className="text-xs text-gray-500 mb-2">// AI_AGENT_SYNTHESIS</div>
                 <div className="text-[11px] leading-relaxed text-gray-400 space-y-2">
-                  <div className="text-white font-semibold">Gemini LLM Response Draft:</div>
+                  <div className="text-white font-semibold">Ollama (llama3.2) LLM Response Draft:</div>
                   <div className="text-[10px] bg-black/50 p-2 rounded">
                     "Identified printer error. In accordance with Network Printer SOP #412, Zone C support printer has been re-synchronized over 802.1x. Closing ticket."
                   </div>
@@ -657,11 +657,11 @@ If issues persist, please contact the local network administrator.`
               </div>
               <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">AI Classification</h3>
               <p className="text-gray-400 text-sm mt-2 leading-relaxed">
-                Gemini analyzes the ticket, classifies the issue, assigns the appropriate category, predicts priority, and generates a confidence score automatically.
+                Ollama (llama3.2) analyzes the ticket, classifies the issue, assigns the appropriate category, predicts priority, and generates a confidence score automatically.
                 {/* Natural Language Processing identifies categories (e.g. VPN issues, Payroll) and tags severity indices automatically. */}
               </p>
               <div className="mt-8 flex items-center justify-between border-t border-blue-500/5 pt-4">
-                <span className="text-[10px] font-mono text-blue-500/60 uppercase">GEMINI AI</span>
+                <span className="text-[10px] font-mono text-blue-500/60 uppercase">OLLAMA AI</span>
                 <span className="text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 flex items-center gap-1 transition-colors">
                   READY <ArrowRight className="w-3 h-3" />
                 </span>
@@ -694,10 +694,10 @@ If issues persist, please contact the local network administrator.`
               </div>
               <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">Resolution Generation</h3>
               <p className="text-gray-400 text-sm mt-2 leading-relaxed">
-                Gemini constructs custom, polite resolutions using retrieved text chunks, maintaining zero-trust strict compliance.
+                Ollama (llama3.2) constructs custom, polite resolutions using retrieved text chunks, maintaining zero-trust strict compliance.
               </p>
               <div className="mt-8 flex items-center justify-between border-t border-blue-500/5 pt-4">
-                <span className="text-[10px] font-mono text-blue-500/60 uppercase">AI RESPONSE</span>
+                <span className="text-[10px] font-mono text-blue-500/60 uppercase">OLLAMA RESPONSE</span>
                 <span className="text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 flex items-center gap-1 transition-colors">
                   READY <ArrowRight className="w-3 h-3" />
                 </span>
@@ -814,7 +814,7 @@ If issues persist, please contact the local network administrator.`
                   04
                 </div>
                 <h5 className="text-white font-bold text-sm">Draft Synthesized</h5>
-                <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">Gemini uses retrieved context to create draft answer</p>
+                <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">Ollama (llama3.2) uses retrieved context to create draft answer</p>
               </div>
 
               <div
@@ -1014,7 +1014,7 @@ If issues persist, please contact the local network administrator.`
               <div className="border border-blue-500/20 rounded p-4 bg-[#030604] hover:border-blue-500/40 transition-all max-w-[200px]">
                 <h5 className="text-white font-bold text-sm flex items-center gap-1.5 justify-center md:justify-start">
                   <Globe className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Gemini AI</span>
+                  <span>Ollama (llama3.2)</span>
                 </h5>
                 <p className="text-[10px] text-gray-500 mt-1">Natural language understanding & synthesis</p>
               </div>
@@ -1084,7 +1084,7 @@ If issues persist, please contact the local network administrator.`
                 )
               },
               {
-                name: 'Gemini AI',
+                name: 'Ollama (llama3.2)',
                 icon: (
                   <svg className="w-5 h-5 text-[#8AB4F8] transition-all duration-700 group-hover:rotate-180 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2a1 1 0 0 1 .993.883L13 3c0 4.97 4.03 9 9 9a1 1 0 0 1 .117 1.993l-.117.007c-4.97 0-9 4.03-9 9a1 1 0 0 1-1.993.117L11 22c0-4.97-4.03-9-9-9a1 1 0 0 1-.117-1.993L2 12c4.97 0 9-4.03 9-9a1 1 0 0 1 1-1z" />
