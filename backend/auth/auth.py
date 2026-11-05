@@ -22,7 +22,7 @@ _token_expire = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or os.getenv("access_to
 ACCESS_TOKEN_EXPIRE_MINUTES = int(_token_expire)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user_login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="//auth/google")
 
 def verify_password(plain_password:str, password: str)->bool:
     return pwd_context.verify(plain_password[:72], password)
@@ -82,4 +82,4 @@ def verify_google_token(token: str) -> dict:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid Google token: {str(e)}"
-        )
+        )

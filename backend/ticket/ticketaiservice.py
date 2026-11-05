@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import logging
 from pathlib import Path
 import requests
@@ -251,21 +252,24 @@ Retrieved SOP Content:
 """
 
     try:
-        logger.info(f"Sending prompt to Ollama model '{OLLAMA_MODEL}':\n{user_prompt}")
+        context_preview_len = len(retrieved_chunks)
+        logger.info(f"[RAG] Dispatching generation request to Ollama (model='{OLLAMA_MODEL}', context_length={context_preview_len:,} chars)...")
 
         messages = [
             {"role": "system", "content": system_instruction},
             {"role": "user", "content": user_prompt}
         ]
 
+        t_start = time.perf_counter()
         ai_ans = call_ollama_chat(
             messages=messages,
             options={"temperature": 0.2}
         )
+        gen_duration = time.perf_counter() - t_start
 
-        logger.info(f"Final Ollama AI Answer:\n{ai_ans}")
+        logger.info(f"[RAG] LLM response generated successfully in {gen_duration:.2f}s ({len(ai_ans.split())} words)")
         return ai_ans
 
     except Exception as e:
-        logger.error(f"Ollama response generation failed: {e}")
+        logger.error(f"[RAG ERROR] Ollama response generation failed: {e}")
         raise e

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AlertCircle, ArrowRight, GitBranch, Shield, Key, User, BookOpen, Layers, CheckCircle } from 'lucide-react';
-import { register, login, loginWithGoogle } from '../../api/authApi.jsx';
+import { register, loginWithGoogle } from '../../api/authApi.jsx';
 
 
 
@@ -18,11 +18,11 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const isFormFilled = fullName.trim() !== '' && 
-                       employeeId.trim() !== '' && 
-                       department.trim() !== '' && 
-                       email.trim() !== '' && 
-                       password.trim() !== '';
+  const isFormFilled = fullName.trim() !== '' &&
+    employeeId.trim() !== '' &&
+    department.trim() !== '' &&
+    email.trim() !== '' &&
+    password.trim() !== '';
 
   // If already logged in, redirect to homepage
   useEffect(() => {
@@ -49,11 +49,11 @@ function Signup() {
       setError('Google Sign-In SDK is not loaded. Please try again in a moment.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
     setSuccessMessage('');
-    
+
     try {
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
@@ -67,20 +67,20 @@ function Signup() {
                   Authorization: `Bearer ${tokenResponse.access_token}`
                 }
               });
-              
+
               if (!res.ok) {
                 throw new Error('Failed to verify token with Google.');
               }
-              
+
               const googleProfile = await res.json();
               const googleEmail = googleProfile.email;
-              
+
               if (!googleEmail) {
                 setError('Could not retrieve email from Google.');
                 setLoading(false);
                 return;
               }
-              
+
               if (googleEmail.toLowerCase().trim() === email.toLowerCase().trim()) {
                 setGoogleAccessToken(tokenResponse.access_token);
                 setIsVerified(true);
@@ -114,10 +114,10 @@ function Signup() {
       setError('Please verify your email with Google first.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       await register(email, password, fullName, department, employeeId, googleAccessToken);
       navigate('/dashboard');
@@ -180,8 +180,8 @@ function Signup() {
               <User className="w-3.5 h-3.5 text-cyan-400" />
               <span>Full Name</span>
             </label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
@@ -197,8 +197,8 @@ function Signup() {
                 <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Employee ID</span>
               </label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
@@ -212,7 +212,7 @@ function Signup() {
                 <Layers className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Department</span>
               </label>
-              <select 
+              <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 disabled={isVerified}
@@ -233,8 +233,8 @@ function Signup() {
               <span>Email Address</span>
             </label>
             <div className="flex gap-2">
-              <input 
-                type="email" 
+              <input
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -250,8 +250,8 @@ function Signup() {
             </div>
             {isVerified && (
               <div className="text-right mt-1">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => {
                     setIsVerified(false);
                     setGoogleAccessToken('');
@@ -270,8 +270,8 @@ function Signup() {
               <Key className="w-3.5 h-3.5 text-cyan-400" />
               <span>Password</span>
             </label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -304,8 +304,8 @@ function Signup() {
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading || !isVerified}
             className="w-full font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white py-3 rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.25)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer mt-4"
           >

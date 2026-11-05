@@ -1,9 +1,13 @@
 import os
+import logging
 import requests
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, Depends, HTTPException, status, Form, File, UploadFile
+
 
 
 from auth.auth import create_access_token,current_user,get_password_hash,verify_password,ACCESS_TOKEN_EXPIRE_MINUTES,verify_google_token
@@ -116,44 +120,7 @@ def create_user(users: CreateUsers):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/user_login")
-def login_users(form_data: OAuth2PasswordRequestForm = Depends()):
-    try:
-        response = (
-            supabase
-            .table("users")
-            .select("*")
-            .eq("email", form_data.username)
-            .execute()
-        )
 
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
-
-        user = response.data[0]
-
-        if not verify_password(form_data.password, user["password_hash"]):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
-
-        access_token = create_access_token(
-            data={"sub": user["email"]},
-            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        )
-
-        return {
-            "access_token": access_token,
-            "token_type": "bearer"
-        }
-
-    except Exception as e:
-        print("LOGIN ERROR:", e)
-        raise HTTPException(status_code=500, detail="Login failed")
 
 
 @app.post("/auth/google")
@@ -192,7 +159,6 @@ def google_login(payload: GoogleLoginRequest):
 
 
 
-
 @app.post("/insert_ticket")
 def app_insert_ticket(
     ticket: InsertTicket,
@@ -216,9 +182,11 @@ async def upload_sop(
         # 1. Read file bytes
         file_bytes = await file.read()
         file_name = file.filename
+        logger.info(f"[RAG-INGEST] Document upload request received: filename='{file_name}' ({len(file_bytes):,} bytes) | Title='{title}', Department='{department}', User ID={user.get('id')}")
         
         # 2. Upload file to Supabase Storage bucket 'sop-documents'
         storage_path = f"{user['id']}/{file_name}"
+        logger.info(f"[RAG-INGEST] Uploading PDF to Supabase Storage bucket 'sop-documents' at path: '{storage_path}'")
         
         upload_res = supabase.storage.from_("sop-documents").upload(
             path=storage_path,
@@ -238,6 +206,7 @@ async def upload_sop(
         response = supabase.table("sop_documents").insert(sop_data).execute()
         
         if not response.data:
+            logger.error(f"[RAG-INGEST ERROR] Failed to register SOP document in database for '{title}'")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to register SOP document in database"
@@ -245,16 +214,19 @@ async def upload_sop(
             
         created_sop = response.data[0]
         sop_id = created_sop["id"]
+        logger.info(f"[RAG-INGEST] SOP document registered with ID #{sop_id}. Triggering extraction and embedding pipeline...")
         
         # 4. Trigger processing of the PDF (download, parse, chunk, store)
         success = process_sop_pdf(sop_id=sop_id, file_url=created_sop["file_url"])
         
         if not success:
+            logger.error(f"[RAG-INGEST ERROR] Text extraction or chunking failed for SOP ID #{sop_id}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="SOP document registered, but PDF text extraction/chunking failed."
             )
             
+        logger.info(f"[RAG-INGEST] Successfully completed ingestion pipeline for SOP ID #{sop_id}")
         return {
             "message": "SOP uploaded and processed successfully",
             "sop_document": created_sop
@@ -263,6 +235,7 @@ async def upload_sop(
     except HTTPException as he:
         raise he
     except Exception as e:
+        logger.error(f"[RAG-INGEST ERROR] Unexpected failure during SOP upload: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {str(e)}"
